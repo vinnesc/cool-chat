@@ -6,6 +6,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <signal.h>
+
 
 #define MAX_CLIENTS 10
 #define QUIT_COMMAND "quit"
@@ -45,23 +47,26 @@ int8_t unregister_client(int socket) {
 
 void handle_connection(int socket) {
 	char buffer[128] = { 0 };
-	uint8_t exit = 0;
+	uint8_t quit = 0;
 
-	while (!exit) {
+	while (!quit) {
+		memset(buffer, 0, sizeof(buffer));
+
 		read(socket, buffer, sizeof(buffer));
 		fprintf(stdout, "Message received!\n%s\n", buffer);
 
 		if (strncmp(buffer, QUIT_COMMAND, strlen(QUIT_COMMAND)) == 0) {
-			exit = 1;
+			quit = 1;
 			fprintf(stdout, "Okay bye!\n");
 		}
 	}
+
+	close(socket);
+	exit(EXIT_FAILURE);
 }
 
 int init_server(struct sockaddr_in *server, uint16_t port) {
 	int sockfd;
-
-	memset(server, 0, sizeof(struct sockaddr_in));
 
 	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 		fprintf(stderr, "ERROR: unable to create a socket\n");
@@ -92,19 +97,30 @@ int main(int argc, char **argv) {
 	}
 
 	int sockfd, connfd;
-	struct sockaddr_in server_address, client_address;
-	unsigned int client_address_len = sizeof(struct sockaddr_in);
+	static struct sockaddr_in server_address, client_address;
+	unsigned int client_address_len;
 	int port = atoi(argv[1]);
 	pid_t pid = 0;
 
-	sockfd = init_server(&server_address, port);
+	//Create daemon.
+	if ((pid = fork()) == -1) {
+		exit(EXIT_FAILURE);
+	} else if (pid > 0) {
+		exit(EXIT_SUCCESS);
+	}
+	//Ignore signals.	
+	(void)signal(SIGCHLD, SIG_IGN);
+	(void)signal(SIGHUP, SIG_IGN);
 	
+
+	sockfd = init_server(&server_address, port);
 	if (sockfd == EXIT_FAILURE) {
 		return EXIT_FAILURE;
 	}
 
 	fprintf(stdout, "Waiting for a connection...\n");
 	while (1) {
+		client_address_len = sizeof(struct sockaddr_in);
 		if ((connfd = accept(sockfd, (SA*)&client_address, &client_address_len)) == -1) {
 			fprintf(stderr, "ERROR: unable to accept an incoming connection\n");
 			return EXIT_FAILURE;
@@ -114,11 +130,11 @@ int main(int argc, char **argv) {
 			return EXIT_FAILURE;
 		}
 
-		if ((pid = fork() == -1)) {
+		if ((pid = fork()) == -1) {
 			fprintf(stderr, "ERROR: unable to fork\n");
 			return EXIT_FAILURE;
 		} else if (pid == 0) {
-			//close(sockfd); This should be closed by the fork and that's it but doesn't work.
+			close(sockfd);
 			handle_connection(connfd);
 		} else {
 			close(connfd);

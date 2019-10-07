@@ -67,11 +67,9 @@ int main(int argc, char **argv) {
 		if (strncmp(message_buffer, QUIT_COMMAND, strlen(QUIT_COMMAND)) == 0) {
 			exit = 1;
 			fprintf(stdout, "Okay bye!\n");
-		} else {
-			send_data(sockfd, message_buffer, strlen(message_buffer)); //length??
 		}
+		
+		send_data(sockfd, message_buffer, strlen(message_buffer)); //length??
 	}
 
-
-	close(sockfd);
 }

@@ -1,3 +1,3 @@
 all:
-		gcc -Wall server.c -o server
-		gcc -Wall client.c -o client
+		gcc -Wall -g server.c -o server
+		gcc -Wall -g client.c -o client
