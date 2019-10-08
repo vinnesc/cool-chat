@@ -72,4 +72,6 @@ int main(int argc, char **argv) {
 		send_data(sockfd, message_buffer, strlen(message_buffer)); //length??
 	}
 
+	fprintf(stdout, "Closing connection!\n");
+
 }

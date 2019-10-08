@@ -8,13 +8,24 @@
 #include <unistd.h>
 #include <signal.h>
 
-
 #define MAX_CLIENTS 10
+#define MAX_NAME_LENGTH 32
 #define QUIT_COMMAND "quit"
+#define NAME_COMMAND "name"
+
+#define TRUE 1
+#define FALSE 0
 
 typedef struct sockaddr SA;
 
-static int clients[MAX_CLIENTS];
+
+typedef struct client_info {
+	int socket;
+	char name[MAX_NAME_LENGTH];
+	char can_talk;
+} client_info;
+
+static client_info *clients[MAX_CLIENTS];
 
 /*
 	This is bad because it's not efficient.
@@ -23,50 +34,105 @@ static int clients[MAX_CLIENTS];
 */
 int8_t register_client(int socket) {
 	for (int i = 0; i < MAX_CLIENTS; i++) {
-		if (clients[i] != -1) {
-			clients[i] = socket;
+		if (clients[i] == NULL) {
+			clients[i] = (client_info*) malloc(sizeof(client_info));
+			clients[i]->socket = socket;
+			clients[i]->can_talk = FALSE;
 			return 0;
 		}
 	}
 
-	fprintf(stderr, "ERROR: unable to register client\n");
-	return 1;
+	return -1;
 }
 
 int8_t unregister_client(int socket) {
 	for (int i = 0; i < MAX_CLIENTS; i++) {
-		if (clients[i] == socket) {
-			clients[i] = -1;
+		if (clients[i] != NULL && clients[i]->socket == socket) {
+			free(clients[i]);
+			clients[i] = NULL;
 			return 0;
 		}
 	}
 
-	fprintf(stderr, "ERROR: unable to uregister client\n");
+	return -1;
+}
+
+int8_t change_client_name(int socket, const char * name) {
+	for (int i = 0; i < MAX_CLIENTS; i++) {
+		if (clients[i] != NULL && clients[i]->socket == socket) {
+			strncpy(clients[i]->name, name, MAX_NAME_LENGTH);
+			return 0;
+		}
+	}
+
+	return -1;
+}
+
+int8_t client_can_talk(int socket) {
+	for (int i = 0; i < MAX_CLIENTS; i++) {
+		if (clients[i] != NULL && clients[i]->socket == socket) {
+			return clients[i]->can_talk;
+		}
+	}
+
+	return -1;
+}
+
+int8_t unmute_client(int socket) {
+	for (int i = 0; i < MAX_CLIENTS; i++) {
+		if (clients[i] != NULL && clients[i]->socket == socket) {
+			clients[i]->can_talk = TRUE;
+		}
+	}
+
 	return -1;
 }
 
 void handle_connection(int socket) {
 	char buffer[128] = { 0 };
+	char name[MAX_NAME_LENGTH] = {0};
 	uint8_t quit = 0;
+
+	if (register_client(socket) == -1) {
+		fprintf(stderr, "ERROR: unable to register client");
+		exit(EXIT_FAILURE);
+	}
 
 	while (!quit) {
 		memset(buffer, 0, sizeof(buffer));
 
-		read(socket, buffer, sizeof(buffer));
-		fprintf(stdout, "Message received!\n%s\n", buffer);
+		read(socket, buffer, sizeof(buffer)); //Check the return and exit the loop if the client disconnected
 
+		if (strncmp(buffer, NAME_COMMAND, strlen(NAME_COMMAND)) == 0) {
+			strncpy(name, buffer + strlen(NAME_COMMAND) + 1, MAX_NAME_LENGTH); //name <name>
+			change_client_name(socket, name);
+			unmute_client(socket);
+			
+			fprintf(stdout, "Name changed!\n");
+		}
+		
 		if (strncmp(buffer, QUIT_COMMAND, strlen(QUIT_COMMAND)) == 0) {
 			quit = 1;
 			fprintf(stdout, "Okay bye!\n");
 		}
+
+		if (client_can_talk(socket)) { //Check if cient didn't exist
+			fprintf(stdout, "Message received!\n%s", buffer); //Print the name like a prompt and signal client to do the same
+		}
 	}
 
+	fprintf(stdout, "Closing connection!\n");
 	close(socket);
 	exit(EXIT_FAILURE);
 }
 
 int init_server(struct sockaddr_in *server, uint16_t port) {
 	int sockfd;
+
+	//Initialize client structure
+	for (int i = 0; i < MAX_CLIENTS; i++) {
+		clients[i] = NULL;
+	}
 
 	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 		fprintf(stderr, "ERROR: unable to create a socket\n");
@@ -123,10 +189,6 @@ int main(int argc, char **argv) {
 		client_address_len = sizeof(struct sockaddr_in);
 		if ((connfd = accept(sockfd, (SA*)&client_address, &client_address_len)) == -1) {
 			fprintf(stderr, "ERROR: unable to accept an incoming connection\n");
-			return EXIT_FAILURE;
-		}
-
-		if (register_client(connfd)) {
 			return EXIT_FAILURE;
 		}
 
