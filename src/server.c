@@ -8,84 +8,72 @@
 #include <unistd.h>
 #include <signal.h>
 
+#include "hash_table.h"
+#include "commands.h"
+
 #define MAX_CLIENTS 10
 #define MAX_NAME_LENGTH 32
-#define QUIT_COMMAND "quit"
-#define NAME_COMMAND "name"
 
 #define TRUE 1
 #define FALSE 0
 
 typedef struct sockaddr SA;
 
-
 typedef struct client_info {
+	unsigned int id;
+
 	int socket;
 	char name[MAX_NAME_LENGTH];
 	char can_talk;
 } client_info;
 
-static client_info *clients[MAX_CLIENTS];
+static HashTable *clients;
+static unsigned int current_client_id = 0; //This will not be thread safe! :D
 
-/*
-	This is bad because it's not efficient.
-	The most efficient way is to assign an ID to each client.
-	This way we can map the position in the array to the client.
-*/
+
+//Way better but idk i'm really not thinking about the design so this might be bad still
 int8_t register_client(int socket) {
-	for (int i = 0; i < MAX_CLIENTS; i++) {
-		if (clients[i] == NULL) {
-			clients[i] = (client_info*) malloc(sizeof(client_info));
-			clients[i]->socket = socket;
-			clients[i]->can_talk = FALSE;
-			return 0;
-		}
-	}
+	client_info *new = (client_info*)malloc(sizeof(client_info));
+	new->id = current_client_id++;
+	new->socket = socket;
+	new->can_talk = FALSE;
 
-	return -1;
+	insert_hash_table(clients, new->id, new); //Return code
 }
 
-int8_t unregister_client(int socket) {
-	for (int i = 0; i < MAX_CLIENTS; i++) {
-		if (clients[i] != NULL && clients[i]->socket == socket) {
-			free(clients[i]);
-			clients[i] = NULL;
-			return 0;
-		}
-	}
-
-	return -1;
+int8_t unregister_client(unsigned int client_id) {
+	remove_hash_table(clients, client_id);
 }
 
-int8_t change_client_name(int socket, const char * name) {
-	for (int i = 0; i < MAX_CLIENTS; i++) {
-		if (clients[i] != NULL && clients[i]->socket == socket) {
-			strncpy(clients[i]->name, name, MAX_NAME_LENGTH);
-			return 0;
-		}
+int8_t change_client_name(unsigned int client_id, const char * name) {
+	client_info *ci = (client_info *)get_hash_table(clients, client_id);
+	if (ci == NULL) {
+		return -1;
 	}
 
-	return -1;
+	strncpy(ci->name, name, MAX_NAME_LENGTH);
+
+	return 0;
 }
 
-int8_t client_can_talk(int socket) {
-	for (int i = 0; i < MAX_CLIENTS; i++) {
-		if (clients[i] != NULL && clients[i]->socket == socket) {
-			return clients[i]->can_talk;
-		}
+int8_t client_can_talk(unsigned int client_id) {
+	client_info *ci = (client_info *)get_hash_table(clients, client_id);
+	if (ci == NULL) {
+		return -1;
 	}
 
-	return -1;
+	return ci->can_talk;
 }
 
-int8_t unmute_client(int socket) {
-	for (int i = 0; i < MAX_CLIENTS; i++) {
-		if (clients[i] != NULL && clients[i]->socket == socket) {
-			clients[i]->can_talk = TRUE;
-		}
+int8_t unmute_client(unsigned int client_id) {
+	client_info *ci = (client_info *)get_hash_table(clients, client_id);
+	if (ci == NULL) {
+		return -1;
 	}
 
-	return -1;
+	ci->can_talk = TRUE;
+
+	return 0;
 }
 
 void handle_connection(int socket) {
@@ -126,13 +114,15 @@ void handle_connection(int socket) {
 	exit(EXIT_FAILURE);
 }
 
+void free_client_info(void *ci) {
+	free((client_info*) ci);
+}
+
 int init_server(struct sockaddr_in *server, uint16_t port) {
 	int sockfd;
 
-	//Initialize client structure
-	for (int i = 0; i < MAX_CLIENTS; i++) {
-		clients[i] = NULL;
-	}
+	//Initialize clients structure
+	clients = new_hash_table(free_client_info);
 
 	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 		fprintf(stderr, "ERROR: unable to create a socket\n");

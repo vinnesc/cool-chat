@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
-#define QUIT_COMMAND "quit"
+#include "commands.h"
 
 typedef struct sockaddr SA;
 

@@ -5,11 +5,11 @@ project(cool_chat)
 set(SERVER_SOURCES
     src/server.c
     src/list.c
+    src/hash_table.c
 )
 
 set(CLIENT_SOURCES
     src/client.c
-    src/list.c
 )
 
 add_executable(server ${SERVER_SOURCES})
