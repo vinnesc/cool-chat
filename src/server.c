@@ -39,6 +39,8 @@ int8_t register_client(int socket) {
 	new->can_talk = FALSE;
 
 	insert_hash_table(clients, new->id, new); //Return code
+
+	return new->id;
 }
 
 int8_t unregister_client(unsigned int client_id) {
@@ -58,8 +60,9 @@ int8_t change_client_name(unsigned int client_id, const char * name) {
 
 int8_t client_can_talk(unsigned int client_id) {
 	client_info *ci = (client_info *)get_hash_table(clients, client_id);
+	
 	if (ci == NULL) {
-		return -1;
+		return FALSE;
 	}
 
 	return ci->can_talk;
@@ -76,15 +79,10 @@ int8_t unmute_client(unsigned int client_id) {
 	return 0;
 }
 
-void handle_connection(int socket) {
+void handle_connection(int id, int socket) {
 	char buffer[128] = { 0 };
 	char name[MAX_NAME_LENGTH] = {0};
 	uint8_t quit = 0;
-
-	if (register_client(socket) == -1) {
-		fprintf(stderr, "ERROR: unable to register client");
-		exit(EXIT_FAILURE);
-	}
 
 	while (!quit) {
 		memset(buffer, 0, sizeof(buffer));
@@ -93,8 +91,8 @@ void handle_connection(int socket) {
 
 		if (strncmp(buffer, NAME_COMMAND, strlen(NAME_COMMAND)) == 0) {
 			strncpy(name, buffer + strlen(NAME_COMMAND) + 1, MAX_NAME_LENGTH); //name <name>
-			change_client_name(socket, name);
-			unmute_client(socket);
+			change_client_name(id, name);
+			unmute_client(id);
 			
 			fprintf(stdout, "Name changed!\n");
 		}
@@ -104,7 +102,7 @@ void handle_connection(int socket) {
 			fprintf(stdout, "Okay bye!\n");
 		}
 
-		if (client_can_talk(socket)) { //Check if cient didn't exist
+		if (client_can_talk(id)) { //Check if cient didn't exist
 			fprintf(stdout, "Message received!\n%s", buffer); //Print the name like a prompt and signal client to do the same
 		}
 	}
@@ -157,6 +155,7 @@ int main(int argc, char **argv) {
 	unsigned int client_address_len;
 	int port = atoi(argv[1]);
 	pid_t pid = 0;
+	unsigned int id;
 
 	//Create daemon.
 	if ((pid = fork()) == -1) {
@@ -164,10 +163,10 @@ int main(int argc, char **argv) {
 	} else if (pid > 0) {
 		exit(EXIT_SUCCESS);
 	}
+
 	//Ignore signals.	
 	(void)signal(SIGCHLD, SIG_IGN);
 	(void)signal(SIGHUP, SIG_IGN);
-	
 
 	sockfd = init_server(&server_address, port);
 	if (sockfd == EXIT_FAILURE) {
@@ -182,14 +181,24 @@ int main(int argc, char **argv) {
 			return EXIT_FAILURE;
 		}
 
+		if ((id = register_client(connfd)) == -1) {
+			fprintf(stderr, "ERROR: unable to register client");
+			exit(EXIT_FAILURE);
+		}
+
 		if ((pid = fork()) == -1) {
 			fprintf(stderr, "ERROR: unable to fork\n");
 			return EXIT_FAILURE;
 		} else if (pid == 0) {
 			close(sockfd);
-			handle_connection(connfd);
+			handle_connection(id, connfd);
 		} else {
 			close(connfd);
+			
+			if (unregister_client(connfd) == -1) {
+				fprintf(stderr, "ERROR: unable to unregister client");
+				exit(EXIT_FAILURE);
+			}
 		}
 
 	}

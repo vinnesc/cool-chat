@@ -9,5 +9,6 @@ void insert_list(List *list, void *value, unsigned int key);
 void append_list(List *list, void *value, unsigned int key);
 void * get_list(List *list,  unsigned int key);
 void remove_list(List *list, unsigned int key);
+void foreach_list(List *list, void (*callback)(unsigned));
 
 #endif

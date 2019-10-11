@@ -25,6 +25,7 @@ static Node * new_node(void *value, unsigned int key) {
     Node *new = (Node *)malloc(sizeof(Node));
     new->value = value;
     new->next = NULL;
+    new->key = key;
 
     return new;
 }
@@ -41,7 +42,7 @@ static void free_node(Node *node, void (*free_callback)(void *)) {
 List * new_list(void (*free_callback)(void *)) {
     List *new = (List *)malloc(sizeof(List));
     new->header = NULL;
-    new->header = free_callback;
+    new->free_callback = free_callback;
 
     return new;
 }
@@ -100,7 +101,7 @@ void append_list(List *list, void *value, unsigned int key) {
 
 void * get_list(List *list,  unsigned int key) {
     if (list == NULL) {
-        return;
+        return NULL;
     }
 
     Node * aux = list->header;
@@ -142,4 +143,20 @@ void remove_list(List *list, unsigned int key) {
         aux = to_delete;
         to_delete = to_delete->next;
     }
+}
+
+void foreach_list(List *list, void (*callback)(unsigned)) {
+    if (list == NULL) {
+        return;
+    }
+
+    Node * aux = list->header;
+
+    while (aux != NULL) {
+        callback(aux->key);
+
+        aux = aux->next;
+    }
+
+    return;
 }
