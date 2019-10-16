@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
-#include "commands.h"
+#include "commands.hpp"
 
 typedef struct sockaddr SA;
 

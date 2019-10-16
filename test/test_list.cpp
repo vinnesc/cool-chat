@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "list.h"
+#include "list.hpp"
 
 /*
     @TODO: WE NEED AN EQUALS METHOD FOR LISTS SO WE CAN GET RID OF KEY!!!

@@ -8,9 +8,9 @@
 #include <unistd.h>
 #include <signal.h>
 
-#include "hash_table.h"
-#include "list.h"
-#include "commands.h"
+#include "hash_table.hpp"
+#include "list.hpp"
+#include "commands.hpp"
 
 #define MAX_CLIENTS 10
 #define MAX_NAME_LENGTH 32
@@ -60,14 +60,14 @@ void send_message_client(void * client, void * msg, void * length) {
 
 //Way better but idk i'm really not thinking about the design so this might be bad still
 int8_t register_client(int socket) {
-	client_info *new = (client_info*)malloc(sizeof(client_info));
-	new->id = current_client_id++;
-	new->socket = socket;
-	new->can_talk = FALSE;
+	client_info *new_client = (client_info*)malloc(sizeof(client_info));
+	new_client->id = current_client_id++;
+	new_client->socket = socket;
+	new_client->can_talk = FALSE;
 
-	insert_hash_table(id_client_ht, new->id, new); //Return code
+	insert_hash_table(id_client_ht, new_client->id, new_client); //Return code
 
-	return new->id;
+	return new_client->id;
 }
 
 int8_t unregister_client(unsigned int client_id) {

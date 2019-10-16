@@ -3,24 +3,24 @@ cmake_minimum_required(VERSION 3.15.4)
 project(cool_chat)
 
 set(SERVER_SOURCES
-    src/server.c
-    src/list.c
-    src/hash_table.c
+    src/server.cpp
+    src/list.cpp
+    src/hash_table.cpp
 )
 
 set(CLIENT_SOURCES
-    src/client.c
+    src/client.cpp
 )
 
 set(TEST_LIST_SOURCES
-    test/test_list.c
-    src/list.c
+    test/test_list.cpp
+    src/list.cpp
 )
 
 set(TEST_HASHTABLE_SOURCES
-    test/test_hash_table.c
-    src/list.c
-    src/hash_table.c
+    test/test_hash_table.cpp
+    src/list.cpp
+    src/hash_table.cpp
 )
 
 add_executable(server ${SERVER_SOURCES})

@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "hash_table.h"
-#include "list.h"
+#include "hash_table.hpp"
+#include "list.hpp"
 
 #define DEFAULT_TABLE_SIZE 50
 
@@ -17,17 +17,17 @@ struct HashTable {
 };
 
 HashTable * new_hash_table(void (*free_callback)(void *)) {
-    HashTable *new = (HashTable*)malloc(sizeof(HashTable));
+    HashTable *new_ht = (HashTable*)malloc(sizeof(HashTable));
 
-    new->entries = (List **)malloc(DEFAULT_TABLE_SIZE * sizeof(List *));
-    new->size = DEFAULT_TABLE_SIZE;
-    new->free_callback = free_callback;
+    new_ht->entries = (List **)malloc(DEFAULT_TABLE_SIZE * sizeof(List *));
+    new_ht->size = DEFAULT_TABLE_SIZE;
+    new_ht->free_callback = free_callback;
 
     for (int i = 0; i < DEFAULT_TABLE_SIZE; i++) {
-        new->entries[i] = NULL;
+        new_ht->entries[i] = NULL;
     }
 
-    return new;
+    return new_ht;
 }
 
 void free_hash_table(HashTable *ht) {

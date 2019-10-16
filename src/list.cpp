@@ -3,7 +3,7 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include "list.h"
+#include "list.hpp"
 
 typedef struct Node Node;
 typedef struct List List;
@@ -22,12 +22,12 @@ struct List{
 };
 
 static Node * new_node(void *value, unsigned int key) {
-    Node *new = (Node *)malloc(sizeof(Node));
-    new->value = value;
-    new->next = NULL;
-    new->key = key;
+    Node *node = (Node *)malloc(sizeof(Node));
+    node->value = value;
+    node->next = NULL;
+    node->key = key;
 
-    return new;
+    return node;
 }
 
 static void free_node(Node *node, void (*free_callback)(void *)) {
@@ -40,11 +40,11 @@ static void free_node(Node *node, void (*free_callback)(void *)) {
 }
 
 List * new_list(void (*free_callback)(void *)) {
-    List *new = (List *)malloc(sizeof(List));
-    new->header = NULL;
-    new->free_callback = free_callback;
+    List *list = (List *)malloc(sizeof(List));
+    list->header = NULL;
+    list->free_callback = free_callback;
 
-    return new;
+    return list;
 }
 
 void free_list(List *list) {
@@ -68,15 +68,15 @@ void insert_list(List *list, void *value, unsigned int key) {
         return;
     }
 
-    Node * new = new_node(value, key);
+    Node * node = new_node(value, key);
 
     if (list->header == NULL) {
-        list->header = new;
+        list->header = node;
     } else {
         Node * aux = list->header;
 
-        new->next = aux;
-        list->header = new;
+        node->next = aux;
+        list->header = node;
     }
 }
 
@@ -84,10 +84,10 @@ void append_list(List *list, void *value, unsigned int key) {
     if (list == NULL) {
         return;
     }
-    Node * new = new_node(value, key);
+    Node * node = new_node(value, key);
     
     if (list->header == NULL) {
-        list->header = new;
+        list->header = node;
     } else {
         Node * aux = list->header;
 
@@ -95,7 +95,7 @@ void append_list(List *list, void *value, unsigned int key) {
             aux = aux->next;
         }
 
-        aux->next = new;
+        aux->next = node;
     }
 }
 

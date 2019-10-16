@@ -1,7 +1,7 @@
 #ifndef HASH_TABLE_H_
 #define HASH_TABLE_H_
 
-#include "list.h"
+#include "list.hpp"
 
 typedef struct HashTable HashTable;
 
