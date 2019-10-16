@@ -9,8 +9,8 @@ typedef struct Node Node;
 typedef struct List List;
 
 struct Node{
-    void *value;
     unsigned int key;
+    void *value;
 
     Node *next;
 };
@@ -145,7 +145,7 @@ void remove_list(List *list, unsigned int key) {
     }
 }
 
-void foreach_list(List *list, void (*callback)(unsigned)) {
+void foreach_list(List *list, void (*callback)(void *, void *, void*), void * first_parameter, void * second_parameter) {
     if (list == NULL) {
         return;
     }
@@ -153,10 +153,22 @@ void foreach_list(List *list, void (*callback)(unsigned)) {
     Node * aux = list->header;
 
     while (aux != NULL) {
-        callback(aux->key);
+        if (second_parameter == NULL) {
+            callback(aux, first_parameter, NULL);
+
+        }
+        callback(aux, first_parameter, second_parameter);
 
         aux = aux->next;
     }
 
     return;
+}
+
+unsigned int get_key_list(Node * node) {
+    return node->key;
+}
+
+void * get_value_list(Node * node) {
+    return node->value;
 }

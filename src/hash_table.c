@@ -72,3 +72,21 @@ void remove_hash_table(HashTable * ht, unsigned int key) {
 
     remove_list(ht->entries[index], key);
 }
+
+//TODO: Move this to variable arguments??
+static void copy_to_list_hash_table(void * node, void * list, void * padding) {
+    List * l = (List*)list;
+    Node * n = (Node*) node;
+
+    insert_list(l, get_value_list(n),get_key_list(n));
+}
+
+List * get_values_hash_table(HashTable * ht, List * list) {
+    for (int i = 0; i < ht->size; i++) {
+        if (ht->entries[i] != NULL) {
+            foreach_list(ht->entries[i], copy_to_list_hash_table, list, NULL);
+        }
+    }
+
+    return list;
+}

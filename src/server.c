@@ -9,6 +9,7 @@
 #include <signal.h>
 
 #include "hash_table.h"
+#include "list.h"
 #include "commands.h"
 
 #define MAX_CLIENTS 10
@@ -25,10 +26,36 @@ typedef struct client_info {
 	int socket;
 	char name[MAX_NAME_LENGTH];
 	char can_talk;
+
+	int (*send_message)(int, char*, size_t);
 } client_info;
 
-static HashTable *clients;
+
+
+static HashTable *id_client_ht;
 static unsigned int current_client_id = 0; //This will not be thread safe! :D
+
+void free_client_info(void *ci) {
+	free((client_info*) ci);
+}
+
+void send_message_client(void * client, void * msg, void * length) {
+	client_info *c = (client_info *) client;
+	char * m = (char *) msg;
+	size_t l = (size_t) length;
+
+	size_t written_bytes = 0;
+	size_t error = 0;
+
+	while ((error = write(c->socket, m, l - written_bytes)) < l) {
+		if (error == -1) {
+			return;
+		}
+
+		written_bytes += error;
+	}
+
+}
 
 
 //Way better but idk i'm really not thinking about the design so this might be bad still
@@ -38,17 +65,17 @@ int8_t register_client(int socket) {
 	new->socket = socket;
 	new->can_talk = FALSE;
 
-	insert_hash_table(clients, new->id, new); //Return code
+	insert_hash_table(id_client_ht, new->id, new); //Return code
 
 	return new->id;
 }
 
 int8_t unregister_client(unsigned int client_id) {
-	remove_hash_table(clients, client_id);
+	remove_hash_table(id_client_ht, client_id);
 }
 
 int8_t change_client_name(unsigned int client_id, const char * name) {
-	client_info *ci = (client_info *)get_hash_table(clients, client_id);
+	client_info *ci = (client_info *)get_hash_table(id_client_ht, client_id);
 	if (ci == NULL) {
 		return -1;
 	}
@@ -59,7 +86,7 @@ int8_t change_client_name(unsigned int client_id, const char * name) {
 }
 
 int8_t client_can_talk(unsigned int client_id) {
-	client_info *ci = (client_info *)get_hash_table(clients, client_id);
+	client_info *ci = (client_info *)get_hash_table(id_client_ht, client_id);
 	
 	if (ci == NULL) {
 		return FALSE;
@@ -69,7 +96,7 @@ int8_t client_can_talk(unsigned int client_id) {
 }
 
 int8_t unmute_client(unsigned int client_id) {
-	client_info *ci = (client_info *)get_hash_table(clients, client_id);
+	client_info *ci = (client_info *)get_hash_table(id_client_ht, client_id);
 	if (ci == NULL) {
 		return -1;
 	}
@@ -83,6 +110,9 @@ void handle_connection(int id, int socket) {
 	char buffer[128] = { 0 };
 	char name[MAX_NAME_LENGTH] = {0};
 	uint8_t quit = 0;
+
+	List * clients = new_list(free_client_info);
+	get_values_hash_table(id_client_ht, clients);
 
 	while (!quit) {
 		memset(buffer, 0, sizeof(buffer));
@@ -104,23 +134,23 @@ void handle_connection(int id, int socket) {
 
 		if (client_can_talk(id)) { //Check if cient didn't exist
 			fprintf(stdout, "Message received!\n%s", buffer); //Print the name like a prompt and signal client to do the same
+			size_t length = sizeof(buffer);
+			foreach_list(clients, send_message_client, buffer, &length);
 		}
 	}
 
 	fprintf(stdout, "Closing connection!\n");
 	close(socket);
 	exit(EXIT_FAILURE);
-}
+}	
 
-void free_client_info(void *ci) {
-	free((client_info*) ci);
-}
+
 
 int init_server(struct sockaddr_in *server, uint16_t port) {
 	int sockfd;
 
 	//Initialize clients structure
-	clients = new_hash_table(free_client_info);
+	id_client_ht = new_hash_table(free_client_info);
 
 	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 		fprintf(stderr, "ERROR: unable to create a socket\n");

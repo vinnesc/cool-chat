@@ -13,8 +13,15 @@
 typedef struct sockaddr SA;
 
 uint8_t send_data(int socket, char *data, size_t length) {    
-    ssize_t written_bytes = 0;
-	while ((written_bytes += write(socket, data, length - written_bytes)) < length);
+    size_t written_bytes = 0;
+	size_t error = 0;
+	while ((error = write(socket, data, length - written_bytes)) < length) {
+		if (error == -1) {
+			return error;
+		}
+
+		written_bytes += error;
+	}
     
 	printf("Message sent!\n");
 

@@ -2,6 +2,10 @@
 #include <stdio.h>
 #include "list.h"
 
+/*
+    @TODO: WE NEED AN EQUALS METHOD FOR LISTS SO WE CAN GET RID OF KEY!!!
+*/
+
 void free_string(void * string) {
     if (string == NULL) {
         return;
@@ -10,8 +14,14 @@ void free_string(void * string) {
     free((char*)string);
 }
 
-void print_key(unsigned int key) {
-    printf("Key: %c\n", (char)key);
+void equals_to(void * object, void * to, void * padding) {
+    if (*(unsigned int*)object == *(unsigned int*)to){
+        printf("OK, GOT %c\n", (char)*(unsigned int*)object);
+    } else {
+        printf("ERROR %d\n", *(unsigned int*)object);
+    }
+
+    *(unsigned int*)to += 1;
 }
 
 int test_append_multiple() {
@@ -88,7 +98,8 @@ void test_foreach_multiple() {
     append_list(l, string_4, (int)'D');
     append_list(l, string_5, (int)'E');
 
-    foreach_list(l, print_key);
+    int n = 65;
+    foreach_list(l, equals_to, &n, NULL);
 
     free_list(l);
 }
