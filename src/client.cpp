@@ -1,8 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
-#include <sys/types.h>
+#include <iostream>
+#include <cstring>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
@@ -12,10 +9,12 @@
 
 typedef struct sockaddr SA;
 
-uint8_t send_data(int socket, char *data, size_t length) {    
-    size_t written_bytes = 0;
-	size_t error = 0;
-	while ((error = write(socket, data, length - written_bytes)) < length) {
+int send_message(int socket, std::string message) {    
+    std::size_t written_bytes = 0;
+	std::size_t error = 0;
+	std::size_t length = message.length();
+
+	while ((error = write(socket, message.c_str(), length - written_bytes)) < length) {
 		if (error == -1) {
 			return error;
 		}
@@ -23,23 +22,21 @@ uint8_t send_data(int socket, char *data, size_t length) {
 		written_bytes += error;
 	}
     
-	printf("Message sent!\n");
+	std::cout << "Message sent" << std::endl;
 
     return 0;
 }
 
-int init_client(struct sockaddr_in *server, char * address, uint16_t port) {
+int init_client(struct sockaddr_in *server, std::string address, int port) {
 	int sockfd;
 
-	memset(server, 0, sizeof(struct sockaddr_in));
-
 	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-		fprintf(stderr, "ERROR: unable to create a socket");
+		std::cerr << "ERROR: unable to create a socket" << std::endl;
 		return -1;
 	}
 	
 	server->sin_family = AF_INET;
-	server->sin_addr.s_addr = inet_addr(address);
+	server->sin_addr.s_addr = inet_addr(address.c_str());
 	server->sin_port = htons(port);
 
 	return sockfd;
@@ -47,15 +44,15 @@ int init_client(struct sockaddr_in *server, char * address, uint16_t port) {
 
 int main(int argc, char **argv) {
 	if (argc < 2) {
-		fprintf(stdout, "usage: server <port_number>\n");
+		std::cerr << "usage: server <port_number>" << std::endl;
 		return EXIT_FAILURE;
 	}
 
 	int sockfd;
-	struct sockaddr_in server_address;
+	static struct sockaddr_in server_address;
+	std::string message;
 	int port = atoi(argv[1]);
-	uint8_t exit = 0;
-	char message_buffer[128] = {0};
+	bool exit = false;
 
 	sockfd = init_client(&server_address, "127.0.0.1", port);
 
@@ -64,21 +61,22 @@ int main(int argc, char **argv) {
 	}
 
 	if (connect(sockfd, (SA*)&server_address, sizeof(server_address)) == -1) { 
-		fprintf(stderr, "ERROR: unable to connect to the server");
+		std::cerr << "ERROR: unable to connect to the server" << std::endl;
         return EXIT_FAILURE;
     }
 
 	while (!exit) {
-		fgets(message_buffer, sizeof(message_buffer), stdin); //TODO: check error
+		std::getline(std::cin, message);
 
-		if (strncmp(message_buffer, QUIT_COMMAND, strlen(QUIT_COMMAND)) == 0) {
+		if (message == QUIT_COMMAND) {
 			exit = 1;
-			fprintf(stdout, "Okay bye!\n");
+			std::cerr << "Okay bye!" << std::endl;
 		}
 		
-		send_data(sockfd, message_buffer, strlen(message_buffer)); //length??
+		send_message(sockfd, message); //length??
 	}
 
-	fprintf(stdout, "Closing connection!\n");
+	std::cout << "Closing connection!" << std::endl;
 
+	return EXIT_SUCCESS;
 }

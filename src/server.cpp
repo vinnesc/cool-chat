@@ -1,146 +1,64 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
-#include <sys/types.h>
+#include <iostream>
+#include <cstring>
+#include <list>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
 #include <signal.h>
 
-#include "hash_table.hpp"
-#include "list.hpp"
 #include "commands.hpp"
+#include "server.hpp"
 
 #define MAX_CLIENTS 10
 #define MAX_NAME_LENGTH 32
 
-#define TRUE 1
-#define FALSE 0
 
 typedef struct sockaddr SA;
 
-typedef struct client_info {
-	unsigned int id;
+int send_message(Client c, std::string message) {
+	int error;
 
-	int socket;
-	char name[MAX_NAME_LENGTH];
-	char can_talk;
+	error = send(c.get_socket(), message.c_str(), message.length(), 0	);
 
-	int (*send_message)(int, char*, size_t);
-} client_info;
-
-
-
-static HashTable *id_client_ht;
-static unsigned int current_client_id = 0; //This will not be thread safe! :D
-
-void free_client_info(void *ci) {
-	free((client_info*) ci);
+	return error;
 }
 
-void send_message_client(void * client, void * msg, void * length) {
-	client_info *c = (client_info *) client;
-	char * m = (char *) msg;
-	size_t l = (size_t) length;
-
-	size_t written_bytes = 0;
-	size_t error = 0;
-
-	while ((error = write(c->socket, m, l - written_bytes)) < l) {
-		if (error == -1) {
-			return;
-		}
-
-		written_bytes += error;
-	}
-
-}
-
-
-//Way better but idk i'm really not thinking about the design so this might be bad still
-int8_t register_client(int socket) {
-	client_info *new_client = (client_info*)malloc(sizeof(client_info));
-	new_client->id = current_client_id++;
-	new_client->socket = socket;
-	new_client->can_talk = FALSE;
-
-	insert_hash_table(id_client_ht, new_client->id, new_client); //Return code
-
-	return new_client->id;
-}
-
-int8_t unregister_client(unsigned int client_id) {
-	remove_hash_table(id_client_ht, client_id);
-}
-
-int8_t change_client_name(unsigned int client_id, const char * name) {
-	client_info *ci = (client_info *)get_hash_table(id_client_ht, client_id);
-	if (ci == NULL) {
-		return -1;
-	}
-
-	strncpy(ci->name, name, MAX_NAME_LENGTH);
-
-	return 0;
-}
-
-int8_t client_can_talk(unsigned int client_id) {
-	client_info *ci = (client_info *)get_hash_table(id_client_ht, client_id);
-	
-	if (ci == NULL) {
-		return FALSE;
-	}
-
-	return ci->can_talk;
-}
-
-int8_t unmute_client(unsigned int client_id) {
-	client_info *ci = (client_info *)get_hash_table(id_client_ht, client_id);
-	if (ci == NULL) {
-		return -1;
-	}
-
-	ci->can_talk = TRUE;
-
-	return 0;
-}
-
-void handle_connection(int id, int socket) {
-	char buffer[128] = { 0 };
-	char name[MAX_NAME_LENGTH] = {0};
-	uint8_t quit = 0;
-
-	List * clients = new_list(free_client_info);
-	get_values_hash_table(id_client_ht, clients);
+void handle_connection(Client c, std::list<Client> clients) {
+	char buffer[128];
+	std::string name;
+	bool quit = false;
+	int error;
 
 	while (!quit) {
-		memset(buffer, 0, sizeof(buffer));
+		error = recv(c.get_socket(), buffer, sizeof(buffer), 0); //Check the return and exit the loop if the client disconnected
 
-		read(socket, buffer, sizeof(buffer)); //Check the return and exit the loop if the client disconnected
+		if (error == -1) {
+			quit = true;
+			continue;
+		}
 
-		if (strncmp(buffer, NAME_COMMAND, strlen(NAME_COMMAND)) == 0) {
-			strncpy(name, buffer + strlen(NAME_COMMAND) + 1, MAX_NAME_LENGTH); //name <name>
-			change_client_name(id, name);
-			unmute_client(id);
+		std::string message(buffer);
+
+		if (message.find(NAME_COMMAND) != std::string::npos) {
+			name = message.substr(strlen(NAME_COMMAND) + 1, std::string::npos);
+			c.change_name(name);
+			c.unmute();
 			
-			fprintf(stdout, "Name changed!\n");
+			std::cerr << "Name changed!" << std::endl;
 		}
 		
-		if (strncmp(buffer, QUIT_COMMAND, strlen(QUIT_COMMAND)) == 0) {
+		if (message == QUIT_COMMAND) {
 			quit = 1;
-			fprintf(stdout, "Okay bye!\n");
+			std::cout << "Okay bye!" << std::endl;
 		}
 
-		if (client_can_talk(id)) { //Check if cient didn't exist
-			fprintf(stdout, "Message received!\n%s", buffer); //Print the name like a prompt and signal client to do the same
-			size_t length = sizeof(buffer);
-			foreach_list(clients, send_message_client, buffer, &length);
+		if (c.can_talk()) { //Check if cient didn't exist
+			std::cout << "Message received!" << std::endl; //Print the name like a prompt and signal client to do the same
 		}
 	}
 
-	fprintf(stdout, "Closing connection!\n");
-	close(socket);
+	std::cout << "Closing connection!" << std::endl;
+	close(c.get_socket());
 	exit(EXIT_FAILURE);
 }	
 
@@ -150,7 +68,6 @@ int init_server(struct sockaddr_in *server, uint16_t port) {
 	int sockfd;
 
 	//Initialize clients structure
-	id_client_ht = new_hash_table(free_client_info);
 
 	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 		fprintf(stderr, "ERROR: unable to create a socket\n");
@@ -176,7 +93,7 @@ int init_server(struct sockaddr_in *server, uint16_t port) {
 
 int main(int argc, char **argv) {
 	if (argc < 2) {
-		fprintf(stdout, "usage: server <port_number>\n");
+		std::cerr << "usage: server <port_number>" << std::endl;
 		return EXIT_FAILURE;
 	}
 
@@ -186,13 +103,16 @@ int main(int argc, char **argv) {
 	int port = atoi(argv[1]);
 	pid_t pid = 0;
 	unsigned int id;
+	std::list<Client> clients;
 
 	//Create daemon.
+	/*
 	if ((pid = fork()) == -1) {
 		exit(EXIT_FAILURE);
 	} else if (pid > 0) {
 		exit(EXIT_SUCCESS);
 	}
+	*/
 
 	//Ignore signals.	
 	(void)signal(SIGCHLD, SIG_IGN);
@@ -203,32 +123,26 @@ int main(int argc, char **argv) {
 		return EXIT_FAILURE;
 	}
 
-	fprintf(stdout, "Waiting for a connection...\n");
-	while (1) {
+	std::cout << "Waiting for a connection..." << std::endl;
+	while (true) {
 		client_address_len = sizeof(struct sockaddr_in);
 		if ((connfd = accept(sockfd, (SA*)&client_address, &client_address_len)) == -1) {
-			fprintf(stderr, "ERROR: unable to accept an incoming connection\n");
+			std::cerr << "ERROR: unable to accept an incoming connection" << std::endl;
 			return EXIT_FAILURE;
 		}
 
-		if ((id = register_client(connfd)) == -1) {
-			fprintf(stderr, "ERROR: unable to register client");
-			exit(EXIT_FAILURE);
-		}
+		Client c(0, connfd);
+		clients.push_back(c);
 
 		if ((pid = fork()) == -1) {
-			fprintf(stderr, "ERROR: unable to fork\n");
+			std::cerr << "ERROR: unable to fork" << std::endl;
 			return EXIT_FAILURE;
 		} else if (pid == 0) {
 			close(sockfd);
-			handle_connection(id, connfd);
+			handle_connection(c, clients);
 		} else {
 			close(connfd);
-			
-			if (unregister_client(connfd) == -1) {
-				fprintf(stderr, "ERROR: unable to unregister client");
-				exit(EXIT_FAILURE);
-			}
+			clients.remove(c);
 		}
 
 	}
