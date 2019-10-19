@@ -6,63 +6,15 @@
 #include <unistd.h>
 #include <signal.h>
 
-#include "commands.hpp"
-#include "server.hpp"
+#include "Commands.hpp"
+#include "ClientModel.hpp"
+#include "ServerController.hpp"
+#include "ClientHandler.hpp"
 
 #define MAX_CLIENTS 10
 #define MAX_NAME_LENGTH 32
 
-
 typedef struct sockaddr SA;
-
-int send_message(Client c, std::string message) {
-	int error;
-
-	error = send(c.get_socket(), message.c_str(), message.length(), 0	);
-
-	return error;
-}
-
-void handle_connection(Client c, std::list<Client> clients) {
-	char buffer[128];
-	std::string name;
-	bool quit = false;
-	int error;
-
-	while (!quit) {
-		error = recv(c.get_socket(), buffer, sizeof(buffer), 0); //Check the return and exit the loop if the client disconnected
-
-		if (error == -1) {
-			quit = true;
-			continue;
-		}
-
-		std::string message(buffer);
-
-		if (message.find(NAME_COMMAND) != std::string::npos) {
-			name = message.substr(strlen(NAME_COMMAND) + 1, std::string::npos);
-			c.change_name(name);
-			c.unmute();
-			
-			std::cerr << "Name changed!" << std::endl;
-		}
-		
-		if (message == QUIT_COMMAND) {
-			quit = 1;
-			std::cout << "Okay bye!" << std::endl;
-		}
-
-		if (c.can_talk()) { //Check if cient didn't exist
-			std::cout << "Message received!" << std::endl; //Print the name like a prompt and signal client to do the same
-		}
-	}
-
-	std::cout << "Closing connection!" << std::endl;
-	close(c.get_socket());
-	exit(EXIT_FAILURE);
-}	
-
-
 
 int init_server(struct sockaddr_in *server, uint16_t port) {
 	int sockfd;
@@ -103,8 +55,9 @@ int main(int argc, char **argv) {
 	int port = atoi(argv[1]);
 	pid_t pid = 0;
 	unsigned int id;
-	std::list<Client> clients;
 
+	auto serverController = std::make_unique<ServerController>();
+	
 	//Create daemon.
 	/*
 	if ((pid = fork()) == -1) {
@@ -131,18 +84,24 @@ int main(int argc, char **argv) {
 			return EXIT_FAILURE;
 		}
 
-		Client c(0, connfd);
-		clients.push_back(c);
+		std::cout << "New connection!" << std::endl;
+		
+		//Create a new client and add it to the clients repository.
+		//In theory, I shouldn't have to delete this objects explicitly?
+		auto client = std::make_shared<Client>(0, connfd);
+		auto clientHandler = std::make_shared<ClientHandler>(client, serverController.get());
+		
+		serverController->addClient(client);
 
 		if ((pid = fork()) == -1) {
 			std::cerr << "ERROR: unable to fork" << std::endl;
 			return EXIT_FAILURE;
 		} else if (pid == 0) {
 			close(sockfd);
-			handle_connection(c, clients);
+			clientHandler->handle();
 		} else {
 			close(connfd);
-			clients.remove(c);
+			serverController->removeClient(client);
 		}
 
 	}

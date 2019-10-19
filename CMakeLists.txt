@@ -2,14 +2,17 @@ cmake_minimum_required(VERSION 3.15.4)
 
 project(cool_chat)
 
-set (CMAKE_CXX_STANDARD 11)
+set (CMAKE_CXX_STANDARD 14)
 
 set(SERVER_SOURCES
-    src/server.cpp
+    src/Server.cpp
+    src/ClientModel.cpp
+    src/ClientHandler.cpp
+    src/ServerController.cpp
 )
 
 set(CLIENT_SOURCES
-    src/client.cpp
+    src/Client.cpp
 )
 
 add_executable(server ${SERVER_SOURCES})
