@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.15.4)
 project(cool_chat)
 
 set (CMAKE_CXX_STANDARD 14)
+set (CMAKE_CXX_FLAGS -pthread)
+
 
 set(SERVER_SOURCES
     src/Server.cpp

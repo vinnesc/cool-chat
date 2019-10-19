@@ -56,6 +56,11 @@ void ClientHandler::handle() {
 	}
 
 	std::cout << "Closing connection!" << std::endl;
+	this->serverController->removeClient(client);
 	close(this->client->getSocket());
-	exit(EXIT_SUCCESS);
 }
+
+void clientHandlerThread(std::shared_ptr<ClientHandler> handler) {
+	handler->handle();
+}
+

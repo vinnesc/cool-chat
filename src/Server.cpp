@@ -5,6 +5,7 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <signal.h>
+#include <thread>
 
 #include "Commands.hpp"
 #include "ClientModel.hpp"
@@ -90,20 +91,10 @@ int main(int argc, char **argv) {
 		//In theory, I shouldn't have to delete this objects explicitly?
 		auto client = std::make_shared<Client>(0, connfd);
 		auto clientHandler = std::make_shared<ClientHandler>(client, serverController.get());
-		
 		serverController->addClient(client);
-
-		if ((pid = fork()) == -1) {
-			std::cerr << "ERROR: unable to fork" << std::endl;
-			return EXIT_FAILURE;
-		} else if (pid == 0) {
-			close(sockfd);
-			clientHandler->handle();
-		} else {
-			close(connfd);
-			serverController->removeClient(client);
-		}
-
+		
+		std::thread handlerThread(clientHandlerThread, clientHandler);
+		handlerThread.detach();
 	}
 	
 	close(sockfd);
