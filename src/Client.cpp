@@ -28,33 +28,6 @@ int send_message(int socket, std::string message) {
     return 0;
 }
 
-void outboundThread(int sockfd) {
-	std::string message;
-	bool exit = false;
-
-	while (!exit) {
-		std::getline(std::cin, message);
-
-		if (message == QUIT_COMMAND) {
-			exit = 1;
-			std::cerr << "Okay bye!" << std::endl;
-		}
-		
-		send_message(sockfd, message); //length??
-	}
-}
-
-void inboundThread(int sockfd) {
-	char buffer[128] = {0};
-	int retval;
-
-	while (true) {
-		if ((retval = recv(sockfd, buffer, sizeof(buffer), 0)) == -1) {
-
-		}
-	}
-}
-
 int init_client(struct sockaddr_in *server, std::string address, int port) {
 	int sockfd;
 
