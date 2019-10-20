@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstring>
+#include <thread>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
@@ -27,6 +28,33 @@ int send_message(int socket, std::string message) {
     return 0;
 }
 
+void outboundThread(int sockfd) {
+	std::string message;
+	bool exit = false;
+
+	while (!exit) {
+		std::getline(std::cin, message);
+
+		if (message == QUIT_COMMAND) {
+			exit = 1;
+			std::cerr << "Okay bye!" << std::endl;
+		}
+		
+		send_message(sockfd, message); //length??
+	}
+}
+
+void inboundThread(int sockfd) {
+	char buffer[128] = {0};
+	int retval;
+
+	while (true) {
+		if ((retval = recv(sockfd, buffer, sizeof(buffer), 0)) == -1) {
+
+		}
+	}
+}
+
 int init_client(struct sockaddr_in *server, std::string address, int port) {
 	int sockfd;
 
@@ -50,9 +78,9 @@ int main(int argc, char **argv) {
 
 	int sockfd;
 	static struct sockaddr_in server_address;
-	std::string message;
 	int port = atoi(argv[1]);
-	bool exit = false;
+	fd_set m_master;
+	auto quit = false;
 
 	sockfd = init_client(&server_address, "127.0.0.1", port);
 
@@ -65,18 +93,48 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-	while (!exit) {
-		std::getline(std::cin, message);
+	while (!quit) {
+		FD_ZERO(&m_master);
 
-		if (message == QUIT_COMMAND) {
-			exit = 1;
-			std::cerr << "Okay bye!" << std::endl;
+		FD_SET(STDIN_FILENO, &m_master);
+		FD_SET(sockfd, &m_master);
+
+		auto retval = select(sockfd + 1, &m_master, NULL, NULL, NULL);
+		if (retval == -1) {
+			std::cerr << "ERROR: select() failed" << std::endl;
+			quit = true;
+			continue;
 		}
-		
-		send_message(sockfd, message); //length??
+
+		if (FD_ISSET(STDIN_FILENO, &m_master)) {
+			std::string input;
+			std::getline(std::cin, input);
+
+			if (input == QUIT_COMMAND) {
+				quit = true;
+				continue;
+			} else {
+				send_message(sockfd, input);
+			}
+		}
+
+		if (FD_ISSET(sockfd, &m_master)) {
+			char buffer[128] = {0};
+			int retval;
+			retval = recv(sockfd, buffer, sizeof(buffer), 0);
+
+			if (retval == -1 || retval == 0) {
+				std::cerr << "Server probably disconnected" << std::endl;
+				quit = true;
+				continue;
+			}
+
+			std::cout << "Message recieved: " << buffer << std::endl;
+		}
+
 	}
 
 	std::cout << "Closing connection!" << std::endl;
-
+	close(sockfd);
 	return EXIT_SUCCESS;
 }

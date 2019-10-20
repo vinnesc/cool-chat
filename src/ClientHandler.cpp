@@ -12,12 +12,12 @@ ClientHandler::ClientHandler(std::shared_ptr<Client> client, std::shared_ptr<Soc
 }
 
 void ClientHandler::handle() {
-    char buffer[128];
 	std::string name;
 	auto quit = false;
 	std::cout << "Handling..." << std::endl;
 
 	while (!quit) {
+		char buffer[128] = {0};
 		auto error = this->socket->recv(buffer, sizeof(buffer));
 		std::cout << "Size in bytes received: " << error << std::endl;
 
@@ -42,17 +42,17 @@ void ClientHandler::handle() {
 			this->client->unmute();
 			
 			std::cout << "Name changed!" << std::endl;
+		} else if (this->client->canTalk()) {
+			this->serverController->messageEverybody(message);
 		}
 		
 		if (message == QUIT_COMMAND) {
 			quit = 1;
 			std::cout << "Okay bye!" << std::endl;
+			continue;
 		}
 
-		if (this->client->canTalk()) {
-			std::cout << "Message received!" << std::endl; //Print the name like a prompt and signal client to do the same
-			
-		}
+		std::cout << "Message received!" << std::endl; //Print the name like a prompt and signal client to do the same
 	}
 
 	std::cout << "Closing connection!" << std::endl;

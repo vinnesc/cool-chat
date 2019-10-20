@@ -15,7 +15,8 @@ class ServerController{
         ~ServerController();
         void addClient(std::shared_ptr<Client> client, std::shared_ptr<SocketBase>);
         bool removeClient(std::shared_ptr<Client> client);
-        bool sendMessageClient(std::shared_ptr<Client> client, std::string message);
+        bool sendMessageClient(std::shared_ptr<Client> client, const Message message);
+        void messageEverybody(Message message);
         std::shared_ptr<Client> getClientByName(std::string name);
         std::shared_ptr<SocketBase> getSocketFromClient(std::shared_ptr<Client> client);
 };
