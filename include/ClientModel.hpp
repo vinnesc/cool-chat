@@ -3,19 +3,17 @@
 #include <iostream>
 #include <string>
 
-#define CLIENT_ID unsigned int
+typedef unsigned int ClientID;
 
 class Client {
     private:
-        CLIENT_ID id;
-        int socket;
+        ClientID id;
         std::string name;
         bool muted;
     public:
-        Client(int id, int socket);
+        Client(ClientID id);
         ~Client();
-        CLIENT_ID getId();
-        int getSocket();
+        ClientID getId();
         std::string getName();
         void changeName(const std::string name);
         void mute();

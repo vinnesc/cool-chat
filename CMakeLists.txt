@@ -11,6 +11,8 @@ set(SERVER_SOURCES
     src/ClientModel.cpp
     src/ClientHandler.cpp
     src/ServerController.cpp
+    src/SocketBase.cpp
+    src/SocketLinux.cpp
 )
 
 set(CLIENT_SOURCES

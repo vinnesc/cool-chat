@@ -3,29 +3,25 @@
 #include "ServerController.hpp"
 
 ServerController::ServerController() {
-    this->clients = new std::list< std::shared_ptr<Client> >();
+    this->clients = new std::unordered_map< std::shared_ptr<Client>, std::shared_ptr<SocketBase> >();
 }
 
 ServerController::~ServerController() {
     delete this->clients;
 }
 
-bool ServerController::addClient(std::shared_ptr<Client> client) {
-    this->clients->push_back(client);
-
-    return true;
+void ServerController::addClient(std::shared_ptr<Client> client, std::shared_ptr<SocketBase> socket) {
+    this->clients->insert(std::make_pair(client, socket));
 }
 
 bool ServerController::removeClient(std::shared_ptr<Client> client) {
-    this->clients->remove(client);
-
-    return true;
+    return this->clients->erase(client);
 }
 
 std::shared_ptr<Client> ServerController::getClientByName(const std::string name) {
     for (auto c : *(this->clients)) {
-        if (c->getName() == name) {
-            return c;
+        if (c.first->getName() == name) {
+            return c.first;
         }
     }
 
@@ -34,7 +30,23 @@ std::shared_ptr<Client> ServerController::getClientByName(const std::string name
 } 
 
 bool ServerController::sendMessageClient(std::shared_ptr<Client> client, const std::string message) {
-	auto error = send(client->getSocket(), message.c_str(), message.length(), 0);
+    auto pair = this->clients->find(client);
 
-	return (bool)error;
+    if (pair == this->clients->end()) {
+        return false;
+    }
+
+    auto error = pair->second->send(message);
+
+	return error;
+}
+
+std::shared_ptr<SocketBase> ServerController::getSocketFromClient(std::shared_ptr<Client> client) {
+    auto pair = this->clients->find(client);
+    
+    if (pair == this->clients->end()) {
+        return nullptr;
+    }
+
+    return pair->second;
 }

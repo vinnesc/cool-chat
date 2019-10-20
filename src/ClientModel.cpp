@@ -1,20 +1,15 @@
 #include "ClientModel.hpp"
 
-Client::Client(int id, int socket) {
+Client::Client(ClientID id) {
     this->id = id;
-    this->socket = socket;
     this->muted = true;
 }
 
 Client::~Client() {
 }
 
-CLIENT_ID Client::getId() {
+ClientID Client::getId() {
     return this->id;
-}
-
-int Client::getSocket() {
-    return this->socket;
 }
 
 std::string Client::getName() {
@@ -39,7 +34,7 @@ bool Client::canTalk() {
 
 bool Client::operator== (const Client &c) const
 {
-    if(c.socket == this->socket) {
+    if(c.name == this->name) {
         return true;
     } else {
         return false;

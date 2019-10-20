@@ -1,13 +1,13 @@
 #include <iostream>
 #include <cstring>
-#include <sys/socket.h>
 #include <unistd.h>
 
 #include "ClientHandler.hpp"
 #include "Commands.hpp"
 
-ClientHandler::ClientHandler(std::shared_ptr<Client> client, ServerController *serverController) {
+ClientHandler::ClientHandler(std::shared_ptr<Client> client, std::shared_ptr<SocketBase> socket, ServerController *serverController) {
     this->client = client;
+	this->socket = socket;
     this->serverController = serverController;
 }
 
@@ -18,7 +18,7 @@ void ClientHandler::handle() {
 	std::cout << "Handling..." << std::endl;
 
 	while (!quit) {
-		auto error = recv(this->client->getSocket(), buffer, sizeof(buffer), 0);
+		auto error = this->socket->recv(buffer, sizeof(buffer));
 		std::cout << "Size in bytes received: " << error << std::endl;
 
 		if (error == 0) {
@@ -57,7 +57,7 @@ void ClientHandler::handle() {
 
 	std::cout << "Closing connection!" << std::endl;
 	this->serverController->removeClient(client);
-	close(this->client->getSocket());
+	close(this->socket->getSocket());
 }
 
 void clientHandlerThread(std::shared_ptr<ClientHandler> handler) {
