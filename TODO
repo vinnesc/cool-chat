@@ -1,7 +1,0 @@
--Wrap everything related to sockets with a Connection class.
--Generate IDs for clients.
--Store clients to database and eventually create a register.
--Move from processes to threads.
--Check for memory leaks.
--Implement private chats.
--Implement chat rooms.
