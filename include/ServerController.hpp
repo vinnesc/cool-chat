@@ -5,6 +5,7 @@
 
 #include "ClientModel.hpp"
 #include "SocketBase.hpp"
+#include "Types.hpp"
 
 class ServerController{
     private:

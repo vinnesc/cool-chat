@@ -3,10 +3,7 @@
 #include <iostream>
 #include <memory>
 
-typedef int Socket;
-typedef char * Buffer;
-typedef std::string Message;
-typedef size_t Length;
+#include "Types.hpp"
 
 class SocketBase {
     public:
