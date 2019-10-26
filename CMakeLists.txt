@@ -12,6 +12,10 @@ set(SERVER_SOURCES
     src/ServerController.cpp
     src/SocketBase.cpp
     src/SocketLinux.cpp
+    src/Command.cpp
+    src/commands/QuitCommand.cpp
+    src/commands/NameCommand.cpp
+    src/commands/WhisperCommand.cpp
 )
 
 add_executable(server ${SERVER_SOURCES})

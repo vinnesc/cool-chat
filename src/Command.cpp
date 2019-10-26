@@ -1,5 +1,9 @@
 #include "Command.hpp"
-#include "QuitCommand.hpp"
+
+#include "commands/NameCommand.hpp"
+#include "commands/QuitCommand.hpp"
+#include "commands/WhisperCommand.hpp"
+
 
 Message Command::serialize() {
     json j;
@@ -20,6 +24,14 @@ Command Command::deserialize(Message message) {
     if (parsed_message["command"] == enumToString(Commands::QUIT)) {
         return QuitCommand(message);
     }
+    if (parsed_message["command"] == enumToString(Commands::NAME)) {
+        return NameCommand(message);
+    }
+    if (parsed_message["command"] == enumToString(Commands::WHISPER)) {
+        return WhisperCommand(message);
+    }
+
+    throw "Unknown command";
 }
 
 const std::string enumToString(Commands command) {
@@ -34,4 +46,8 @@ const std::string enumToString(Commands command) {
 
     default: return "unknown";
     }
+}
+
+Commands Command::getCommandType() {
+    return this->command;
 }

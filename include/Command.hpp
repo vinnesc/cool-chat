@@ -6,6 +6,10 @@
 
 using nlohmann::json;
 
+class QuitCommand;
+class NameCommand;
+class WhisperCommand;
+
 enum class Commands {
     NAME = 0,
     QUIT,
@@ -19,8 +23,9 @@ class Command {
     protected:
         Commands command;
     public:
+        Commands getCommandType();
         virtual Message serialize();
-        virtual Command deserialize(Message message);
+        static Command deserialize(Message message);
 };
 
 const std::string enumToString(Commands command);
