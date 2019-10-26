@@ -1,14 +1,7 @@
 #include "commands/QuitCommand.hpp"
 
-QuitCommand::QuitCommand(Message message) {
-    auto parsed_message = json::parse(message);
-    auto command = enumToString(Commands::QUIT);
-
-    if (parsed_message["type"] == "command" && parsed_message["command"] == command) {
-        this->command = Commands::QUIT;
-    } else {
-        throw "QUIT command not valid";
-    }
+QuitCommand::QuitCommand() {
+    this->command = Commands::QUIT;
 }
 
 Message QuitCommand::serialize() {
@@ -18,4 +11,15 @@ Message QuitCommand::serialize() {
     j["command"] = this->command;
 
     return j.dump();
+}
+
+QuitCommand QuitCommand::deserialize(Message message) {
+    auto parsed_message = json::parse(message);
+    auto command = enumToString(Commands::QUIT);
+
+    if (parsed_message["type"] == "command" && parsed_message["command"] == command) {
+        return QuitCommand();
+    } else {
+        throw "NAME command not valid";
+    }
 }

@@ -4,6 +4,7 @@
 
 class QuitCommand : public Command {
     public:
-        QuitCommand(Message message);
+        QuitCommand();
         Message serialize();
+        static QuitCommand deserialize(Message message);
 };

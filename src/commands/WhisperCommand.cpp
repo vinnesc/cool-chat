@@ -1,17 +1,10 @@
 #include "commands/WhisperCommand.hpp"
 
-WhisperCommand::WhisperCommand(Message message) {
-    auto parsed_message = json::parse(message);
-    auto command = enumToString(Commands::WHISPER);
-
-    if (parsed_message["type"] == "command" && parsed_message["command"] == command) {
-        this->command = Commands::WHISPER;
-        this->receiver = parsed_message["from"];
-        this->sender = parsed_message["to"];
-        this->message = parsed_message["message"];
-    } else {
-        throw "WHISPER command not valid";
-    }
+WhisperCommand::WhisperCommand(std::string sender, std::string receiver, Message message) {
+    this->command = Commands::WHISPER;
+    this->sender = sender;
+    this->receiver = receiver;
+    this->message = message;
 }
 
 Message WhisperCommand::serialize() {
@@ -24,4 +17,15 @@ Message WhisperCommand::serialize() {
     j["message"] = this->message;
 
     return j.dump();
+}
+
+WhisperCommand WhisperCommand::deserialize(Message message) {
+    auto parsed_message = json::parse(message);
+    auto command = enumToString(Commands::WHISPER);
+
+    if (parsed_message["type"] == "command" && parsed_message["command"] == command) {
+        return WhisperCommand(parsed_message["from"], parsed_message["to"], parsed_message["message"]);
+    } else {
+        throw "WHISPER command not valid";
+    }
 }

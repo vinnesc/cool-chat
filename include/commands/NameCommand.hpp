@@ -6,7 +6,8 @@ class NameCommand : public Command {
     private:
         std::string name;
     public:
-        NameCommand(Message message);
+        NameCommand(std::string name);
         std::string getName();
         Message serialize();
+        static NameCommand deserialize(Message message);
 };

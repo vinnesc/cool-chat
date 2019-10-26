@@ -22,13 +22,13 @@ Command Command::deserialize(Message message) {
 
     //Insert every command.
     if (parsed_message["command"] == enumToString(Commands::QUIT)) {
-        return QuitCommand(message);
+        return QuitCommand::deserialize(message);
     }
     if (parsed_message["command"] == enumToString(Commands::NAME)) {
-        return NameCommand(message);
+        return NameCommand::deserialize(message);
     }
     if (parsed_message["command"] == enumToString(Commands::WHISPER)) {
-        return WhisperCommand(message);
+        return WhisperCommand::deserialize(message);
     }
 
     throw "Unknown command";
