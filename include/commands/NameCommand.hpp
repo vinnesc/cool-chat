@@ -9,5 +9,5 @@ class NameCommand : public Command {
         NameCommand(std::string name);
         std::string getName();
         Message serialize();
-        static NameCommand deserialize(Message message);
+        static NameCommand* deserialize(Message message);
 };

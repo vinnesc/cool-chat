@@ -15,12 +15,12 @@ Message NameCommand::serialize() {
     return j.dump();
 }
 
-NameCommand NameCommand::deserialize(Message message) {
+NameCommand* NameCommand::deserialize(Message message) {
     auto parsed_message = json::parse(message);
-    auto command = enumToString(Commands::NAME);
+    auto command = Commands::NAME;
 
     if (parsed_message["type"] == "command" && parsed_message["command"] == command) {
-        return NameCommand(parsed_message["name"]);
+        return new NameCommand(parsed_message["name"]);
     } else {
         throw "NAME command not valid";
     }

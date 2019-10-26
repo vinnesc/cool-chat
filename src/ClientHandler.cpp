@@ -42,11 +42,11 @@ void ClientHandler::handle() {
 		}
 
 		std::string message(buffer);
+		
 		auto command = Command::deserialize(message);
-
-		if (command.getCommandType() == Commands::NAME) {
-			auto name_command = dynamic_cast<NameCommand&>(command);
-			name = name_command.getName();
+		if (command->getCommandType() == Commands::NAME) {
+			auto name_command = dynamic_cast<NameCommand*>(command);
+			name = name_command->getName();
 
 			this->client->changeName(name);
 			this->client->unmute();

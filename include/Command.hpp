@@ -25,7 +25,7 @@ class Command {
     public:
         Commands getCommandType();
         virtual Message serialize();
-        static Command deserialize(Message message);
+        static Command* deserialize(Message message);
 };
 
 const std::string enumToString(Commands command);

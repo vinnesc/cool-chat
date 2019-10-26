@@ -13,13 +13,13 @@ Message QuitCommand::serialize() {
     return j.dump();
 }
 
-QuitCommand QuitCommand::deserialize(Message message) {
+QuitCommand* QuitCommand::deserialize(Message message) {
     auto parsed_message = json::parse(message);
-    auto command = enumToString(Commands::QUIT);
+    auto command = Commands::QUIT;
 
     if (parsed_message["type"] == "command" && parsed_message["command"] == command) {
-        return QuitCommand();
+        return new QuitCommand();
     } else {
-        throw "NAME command not valid";
+        throw "QUIT command not valid";
     }
 }

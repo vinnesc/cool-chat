@@ -19,12 +19,12 @@ Message WhisperCommand::serialize() {
     return j.dump();
 }
 
-WhisperCommand WhisperCommand::deserialize(Message message) {
+WhisperCommand* WhisperCommand::deserialize(Message message) {
     auto parsed_message = json::parse(message);
-    auto command = enumToString(Commands::WHISPER);
+    auto command = Commands::WHISPER;
 
     if (parsed_message["type"] == "command" && parsed_message["command"] == command) {
-        return WhisperCommand(parsed_message["from"], parsed_message["to"], parsed_message["message"]);
+        return new WhisperCommand(parsed_message["from"], parsed_message["to"], parsed_message["message"]);
     } else {
         throw "WHISPER command not valid";
     }

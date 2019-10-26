@@ -10,5 +10,5 @@ class WhisperCommand : public Command {
     public:
         WhisperCommand(std::string sender, std::string receiver, Message message);
         Message serialize();
-        static WhisperCommand deserialize(Message message);
+        static WhisperCommand* deserialize(Message message);
 };

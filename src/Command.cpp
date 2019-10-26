@@ -1,8 +1,10 @@
-#include "Command.hpp"
+#include <iostream>
 
+#include "Command.hpp"
 #include "commands/NameCommand.hpp"
 #include "commands/QuitCommand.hpp"
 #include "commands/WhisperCommand.hpp"
+
 
 
 Message Command::serialize() {
@@ -14,20 +16,20 @@ Message Command::serialize() {
     return j.dump();
 }
 
-Command Command::deserialize(Message message) {
+Command* Command::deserialize(Message message) {
     auto parsed_message = json::parse(message);
     if (parsed_message["type"] != "command") {
         throw "Unexpected message";
     }
 
     //Insert every command.
-    if (parsed_message["command"] == enumToString(Commands::QUIT)) {
+    if (parsed_message["command"] == Commands::QUIT) {
         return QuitCommand::deserialize(message);
     }
-    if (parsed_message["command"] == enumToString(Commands::NAME)) {
+    if (parsed_message["command"] == Commands::NAME) {
         return NameCommand::deserialize(message);
     }
-    if (parsed_message["command"] == enumToString(Commands::WHISPER)) {
+    if (parsed_message["command"] == Commands::WHISPER) {
         return WhisperCommand::deserialize(message);
     }
 
