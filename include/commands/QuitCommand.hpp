@@ -2,10 +2,9 @@
 
 #include "Command.hpp"
 
-#define QUIT "quit"
-
 class QuitCommand : public Command {
     public:
+        QuitCommand(Message message);
         Message serialize();
-        void desearialize(Message payload);
+        void desearialize(Message message);
 };

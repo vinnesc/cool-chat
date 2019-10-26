@@ -11,9 +11,9 @@ class ClientHandler{
     private:
         std::shared_ptr<Client> client;
         std::shared_ptr<SocketBase> socket;
-        ServerController *serverController;
+        ServerController &serverController;
     public:
-        ClientHandler(std::shared_ptr<Client> client, std::shared_ptr<SocketBase> socket, ServerController *serverController);
+        ClientHandler(std::shared_ptr<Client> client, std::shared_ptr<SocketBase> socket, ServerController &serverController);
         void handle();
 };
 

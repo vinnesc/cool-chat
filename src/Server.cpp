@@ -36,8 +36,10 @@ int main(int argc, char **argv) {
 	fd_set m_master;
 	Port port = atoi(argv[1]);
 	auto quit = false;
-	auto serverController = std::make_unique<ServerController>();
+
+	//Is this the way it should be done?
 	auto socket = std::make_unique<SocketLinux>(port);
+	ServerController serverController;
 
 	if (init_server(*socket) == -1) {
 		return EXIT_FAILURE;
@@ -78,9 +80,9 @@ int main(int argc, char **argv) {
 			std::cout << "New connection!" << std::endl;
 			//Create a new client and add it to the clients repository.
 			//In theory, I shouldn't have to delete this objects explicitly?
-			auto client = std::make_shared<Client>(0);
-			auto clientHandler = std::make_shared<ClientHandler>(client, connfd, serverController.get());
-			serverController->addClient(client, connfd);
+			auto client = std::make_shared<Client>(0); 	//TO-DO: Implement clients ID
+			auto clientHandler = std::make_shared<ClientHandler>(client, connfd, serverController);
+			serverController.addClient(client, connfd);
 			
 			std::thread handlerThread(clientHandlerThread, clientHandler);
 			handlerThread.detach();

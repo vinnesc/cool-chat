@@ -5,10 +5,12 @@
 #include "ClientHandler.hpp"
 #include "Commands.hpp"
 
-ClientHandler::ClientHandler(std::shared_ptr<Client> client, std::shared_ptr<SocketBase> socket, ServerController *serverController) {
-    this->client = client;
-	this->socket = socket;
-    this->serverController = serverController;
+ClientHandler::ClientHandler (
+								std::shared_ptr<Client> client,
+								std::shared_ptr<SocketBase> socket,
+								ServerController &serverController) 
+: client(client), socket(socket), serverController(serverController)
+{
 }
 
 void ClientHandler::handle() {
@@ -43,7 +45,7 @@ void ClientHandler::handle() {
 			
 			std::cout << "Name changed!" << std::endl;
 		} else if (this->client->canTalk()) {
-			this->serverController->messageEverybody(message);
+			this->serverController.messageEverybody(message);
 		}
 		
 		if (message == QUIT_COMMAND) {
@@ -56,7 +58,7 @@ void ClientHandler::handle() {
 	}
 
 	std::cout << "Closing connection!" << std::endl;
-	this->serverController->removeClient(client);
+	this->serverController.removeClient(client);
 	close(this->socket->getSocket());
 }
 

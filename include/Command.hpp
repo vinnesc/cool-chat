@@ -2,18 +2,25 @@
 
 #include "Types.hpp"
 
-enum Commands {
-    name,
-    quit,
-    whisper,
-    join,
-    create
+#include "json.hpp"
+
+using nlohmann::json;
+
+enum class Commands {
+    NAME = 0,
+    QUIT,
+    WHISPER,
+    JOIN,
+    CREATE,
+    UNKNOWN
 };
 
 class Command {
     protected:
-        Commands type;
+        Commands command;
     public:
-        virtual Message serialize() = 0;
-        virtual void deserialize() = 0;
+        virtual Message serialize();
+        virtual Command deserialize(Message message);
 };
+
+const std::string enumToString(Commands command);
