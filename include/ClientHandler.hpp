@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <thread>
+#include <unordered_map>
 
 #include "ClientModel.hpp"
 #include "ServerController.hpp"
@@ -9,12 +10,12 @@
 
 class ClientHandler{
     private:
-        std::shared_ptr<Client> client;
-        std::shared_ptr<SocketBase> socket;
         ServerController &serverController;
+        Socket registerFileDescriptors(fd_set &master);
     public:
-        ClientHandler(std::shared_ptr<Client> client, std::shared_ptr<SocketBase> socket, ServerController &serverController);
+        ClientHandler(ServerController& serverController);
         void handle();
+
 };
 
-void clientHandlerThread(std::shared_ptr<ClientHandler> handler);
+void clientHandlerThread(ClientHandler& handler);

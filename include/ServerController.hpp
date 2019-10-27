@@ -9,7 +9,7 @@
 
 class ServerController{
     private:
-        std::unordered_map< std::shared_ptr<Client>, std::shared_ptr<SocketBase> > *clients; //Create a class that abstracts how clients are stored
+        std::unordered_map<std::shared_ptr<Client>, std::shared_ptr<SocketBase> > clients; //abstract collection
     
     public:
         ServerController();
@@ -20,4 +20,5 @@ class ServerController{
         void messageEverybody(Message message);
         std::shared_ptr<Client> getClientByName(std::string name);
         std::shared_ptr<SocketBase> getSocketFromClient(std::shared_ptr<Client> client);
+        std::unordered_map<std::shared_ptr<Client>, std::shared_ptr<SocketBase> >& getClientsSockets();
 };

@@ -40,12 +40,14 @@ int main(int argc, char **argv) {
 	//auto socket = std::make_unique<SocketLinux>(port);
 	SocketLinux socket(port);
 	ServerController serverController;
+	ClientHandler handler(serverController);
 
 	if (init_server(dynamic_cast<SocketBase&>(socket)) == -1) {
 		return EXIT_FAILURE;
 	}
 
 	std::cout << "Waiting for a connection...\n";
+	std::thread handlerThread(clientHandlerThread, std::ref(handler));
 	while (!quit) {
 		FD_ZERO(&m_master);
 
@@ -70,8 +72,8 @@ int main(int argc, char **argv) {
 		}
 
 		if (FD_ISSET(socket.getSocket(), &m_master)) {
-			auto connfd = socket.accept();
-			if (connfd == nullptr) {
+			auto connection_socket = socket.accept();
+			if (connection_socket == nullptr) {
 				std::cerr << "ERROR: unable to accept an incoming connection\n";
 				quit = true;
 				continue;
@@ -81,13 +83,10 @@ int main(int argc, char **argv) {
 			//Create a new client and add it to the clients repository.
 			//In theory, I shouldn't have to delete this objects explicitly?
 			auto client = std::make_shared<Client>(0); 	//TO-DO: Implement clients ID
-			auto clientHandler = std::make_shared<ClientHandler>(client, connfd, serverController);
-			serverController.addClient(client, connfd);
-			
-			std::thread handlerThread(clientHandlerThread, clientHandler);
-			handlerThread.detach();
+			serverController.addClient(client, connection_socket);
 		}
 	}
-	
+	handlerThread.join();
+
 	return 0;
 }
