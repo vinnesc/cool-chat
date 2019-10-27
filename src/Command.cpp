@@ -5,7 +5,10 @@
 #include "commands/QuitCommand.hpp"
 #include "commands/WhisperCommand.hpp"
 
-
+Command::Command(Commands command) 
+: command(command)
+{
+}
 
 Message Command::serialize() {
     json j;

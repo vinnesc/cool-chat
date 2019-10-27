@@ -20,9 +20,10 @@ enum class Commands {
 };
 
 class Command {
-    protected:
+    private:
         Commands command;
     public:
+        Command(Commands command);
         Commands getCommandType();
         virtual Message serialize();
         static Command* deserialize(Message message);

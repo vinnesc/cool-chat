@@ -1,14 +1,14 @@
 #include "commands/QuitCommand.hpp"
 
-QuitCommand::QuitCommand() {
-    this->command = Commands::QUIT;
+QuitCommand::QuitCommand() : Command(Commands::QUIT)
+{
 }
 
 Message QuitCommand::serialize() {
     json j;
 
     j["type"] = "command";
-    j["command"] = this->command;
+    j["command"] = Commands::QUIT;
 
     return j.dump();
 }

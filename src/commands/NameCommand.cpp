@@ -1,15 +1,15 @@
 #include "commands/NameCommand.hpp"
 
-NameCommand::NameCommand(std::string name) {
-    this->command = Commands::NAME;
-    this->name = name;
+NameCommand::NameCommand(std::string name)
+: Command(Commands::NAME), name(name)
+{
 }
 
 Message NameCommand::serialize() {
     json j;
 
     j["type"] = "command";
-    j["command"] = this->command;
+    j["command"] = Commands::NAME;
     j["name"] = this->name;
 
     return j.dump();
@@ -17,9 +17,8 @@ Message NameCommand::serialize() {
 
 NameCommand* NameCommand::deserialize(Message message) {
     auto parsed_message = json::parse(message);
-    auto command = Commands::NAME;
 
-    if (parsed_message["type"] == "command" && parsed_message["command"] == command) {
+    if (parsed_message["type"] == "command" && parsed_message["command"] == Commands::NAME) {
         return new NameCommand(parsed_message["name"]);
     } else {
         throw "NAME command not valid";

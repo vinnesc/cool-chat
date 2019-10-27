@@ -1,17 +1,15 @@
 #include "commands/WhisperCommand.hpp"
 
-WhisperCommand::WhisperCommand(std::string sender, std::string receiver, Message message) {
-    this->command = Commands::WHISPER;
-    this->sender = sender;
-    this->receiver = receiver;
-    this->message = message;
+WhisperCommand::WhisperCommand(std::string sender, std::string receiver, Message message)
+: Command(Commands::WHISPER), sender(sender), receiver(receiver), message(message)
+{
 }
 
 Message WhisperCommand::serialize() {
     json j;
 
     j["type"] = "command";
-    j["command"] = this->command;
+    j["command"] = Commands::WHISPER;
     j["from"] = this->sender;
     j["to"] = this->receiver;
     j["message"] = this->message;
