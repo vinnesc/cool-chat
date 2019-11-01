@@ -27,16 +27,21 @@ std::shared_ptr<Client> ServerController::getClientByName(const std::string name
     return nullptr;
 } 
 
-bool ServerController::sendMessageClient(std::shared_ptr<Client> client, const Message message) {
-    auto pair = this->clients.find(client);
+bool ServerController::sendMessageClient(std::string name, const Message message) {
+    auto client = this->getClientByName(name);
+    auto socket = this->getSocketFromClient(client);
 
-    if (pair == this->clients.end()) {
+    if (client == nullptr) {
         return false;
     }
 
-    auto error = pair->second->send(message);
+    auto error = socket->send(message);
 
-	return error;
+    if (error < message.length()) {
+        return false;
+    }
+
+	return true;
 }
 
 std::shared_ptr<SocketBase> ServerController::getSocketFromClient(std::shared_ptr<Client> client) {
@@ -51,7 +56,8 @@ std::shared_ptr<SocketBase> ServerController::getSocketFromClient(std::shared_pt
 
 void ServerController::messageEverybody(Message message) {
     for (auto& c : this->clients) {
-        this->sendMessageClient(c.first, message);
+        //Bad layer of indirection, just do it here
+        this->sendMessageClient(c.first->getName(), message);
     }
 }
 

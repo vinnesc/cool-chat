@@ -27,3 +27,15 @@ WhisperCommand* WhisperCommand::deserialize(Message message) {
         throw "WHISPER command not valid";
     }
 }
+
+std::string WhisperCommand::getSender() {
+    return this->sender;
+}
+
+std::string WhisperCommand::getReceiver() {
+    return this->receiver;
+}
+
+Message WhisperCommand::getMessage() {
+    return this->message;
+}

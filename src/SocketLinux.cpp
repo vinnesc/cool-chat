@@ -1,10 +1,19 @@
 #include "SocketLinux.hpp"
 
+#include <fcntl.h>
+
 typedef struct sockaddr SA;
 
 SocketLinux::SocketLinux(Port port) {
     this->listeningSocket = ::socket(AF_INET, SOCK_STREAM, 0);
     if (this->listeningSocket == -1) {
+        perror("ERROR: socket() failed");
+        throw "Failed to create a socket";
+    }
+    
+    auto error = fcntl(this->listeningSocket, F_SETFL, O_NONBLOCK);
+    if (error == -1) {
+        perror("ERROR: fcntl() failed");
         throw "Failed to create a socket";
     }
 
@@ -15,6 +24,7 @@ SocketLinux::SocketLinux(Port port) {
 
 SocketLinux::SocketLinux(Socket socket) {
     if (socket == -1) {
+        std::cerr << "ERROR: invalid socket\n";
         throw "Invalid socket";
     }
 
@@ -39,13 +49,20 @@ int SocketLinux::listen() {
 
 std::shared_ptr<SocketBase> SocketLinux::accept() {
     socklen_t client_address_length = sizeof(this->client_address);
-    auto retval = ::accept(this->listeningSocket, reinterpret_cast<SA*>(&(this->client_address)), &client_address_length);
+    auto socket = ::accept(this->listeningSocket, reinterpret_cast<SA*>(&(this->client_address)), &client_address_length);
 
-    if (retval == -1) {
+    if (socket == -1) {
         return nullptr;
     }
 
-    return std::make_shared<SocketLinux>(retval);
+    auto error = fcntl(socket, F_SETFL, O_NONBLOCK);
+    if (error == -1) {
+        perror("ERROR: fcntl() failed");
+        return nullptr;
+    }
+
+
+    return std::make_shared<SocketLinux>(socket);
 }
 
 int SocketLinux::send(const Message msg) {

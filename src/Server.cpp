@@ -14,12 +14,12 @@
 
 int init_server(SocketBase &socket) {
 	if (socket.bind() == -1) {
-		std::cerr << "ERROR: unable to bind the socket\n";
+		perror("ERROR: bind() failed");
 		return -1;
 	}
 	
 	if (socket.listen() == -1) {
-		std::cerr << "ERROR: unable to listen from the socket\n";
+		perror("ERROR: listen() failed");
 		return -1;
 	}
 
@@ -37,7 +37,6 @@ int main(int argc, char **argv) {
 	auto quit = false;
 
 	//Is this the way it should be done?
-	//auto socket = std::make_unique<SocketLinux>(port);
 	SocketLinux socket(port);
 	ServerController serverController;
 	ClientHandler handler(serverController);
@@ -56,7 +55,7 @@ int main(int argc, char **argv) {
 
 		auto retval = select(socket.getSocket() + 1, &m_master, NULL, NULL, NULL);
 		if (retval == -1) {
-			std::cerr << "ERROR: select() failed\n";
+			perror("ERROR: select() failed");
 			quit = true;
 			continue;
 		}
