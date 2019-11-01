@@ -15,11 +15,11 @@ Message NameCommand::serialize() {
     return j.dump();
 }
 
-NameCommand* NameCommand::deserialize(Message message) {
+std::unique_ptr<NameCommand> NameCommand::deserialize(Message message) {
     auto parsed_message = json::parse(message);
 
     if (parsed_message["type"] == "command" && parsed_message["command"] == Commands::NAME) {
-        return new NameCommand(parsed_message["name"]);
+        return std::make_unique<NameCommand>(parsed_message["name"]);
     } else {
         throw "NAME command not valid";
     }

@@ -17,12 +17,12 @@ Message WhisperCommand::serialize() {
     return j.dump();
 }
 
-WhisperCommand* WhisperCommand::deserialize(Message message) {
+std::unique_ptr<WhisperCommand> WhisperCommand::deserialize(Message message) {
     auto parsed_message = json::parse(message);
     auto command = Commands::WHISPER;
 
     if (parsed_message["type"] == "command" && parsed_message["command"] == command) {
-        return new WhisperCommand(parsed_message["from"], parsed_message["to"], parsed_message["message"]);
+        return std::make_unique<WhisperCommand>(parsed_message["from"], parsed_message["to"], parsed_message["message"]);
     } else {
         throw "WHISPER command not valid";
     }

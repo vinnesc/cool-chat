@@ -6,5 +6,5 @@ class QuitCommand : public Command {
     public:
         QuitCommand();
         Message serialize();
-        static QuitCommand* deserialize(Message message);
+        static std::unique_ptr<QuitCommand> deserialize(Message message);
 };

@@ -10,7 +10,7 @@ class WhisperCommand : public Command {
     public:
         WhisperCommand(std::string sender, std::string receiver, Message message);
         Message serialize();
-        static WhisperCommand* deserialize(Message message);
+        static std::unique_ptr<WhisperCommand> deserialize(Message message);
         std::string getSender();
         std::string getReceiver();
         Message getMessage();

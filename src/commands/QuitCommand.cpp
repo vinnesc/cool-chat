@@ -13,12 +13,12 @@ Message QuitCommand::serialize() {
     return j.dump();
 }
 
-QuitCommand* QuitCommand::deserialize(Message message) {
+std::unique_ptr<QuitCommand> QuitCommand::deserialize(Message message) {
     auto parsed_message = json::parse(message);
     auto command = Commands::QUIT;
 
     if (parsed_message["type"] == "command" && parsed_message["command"] == command) {
-        return new QuitCommand();
+        return std::make_unique<QuitCommand>();
     } else {
         throw "QUIT command not valid";
     }

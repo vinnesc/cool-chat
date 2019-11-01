@@ -19,7 +19,7 @@ Message Command::serialize() {
     return j.dump();
 }
 
-Command* Command::deserialize(Message message) {
+std::unique_ptr<Command> Command::deserialize(Message message) {
     auto parsed_message = json::parse(message);
     if (parsed_message["type"] != "command") {
         throw "Unexpected message";

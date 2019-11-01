@@ -78,7 +78,7 @@ void ClientHandler::handle() {
 				switch (command->getCommandType()) {
 					case Commands::NAME: 
 					{
-						auto name_command = dynamic_cast<NameCommand*>(command);
+						auto name_command = dynamic_cast<NameCommand*>(command.get());
 						auto name = name_command->getName();
 
 						client->changeName(name);
@@ -89,7 +89,7 @@ void ClientHandler::handle() {
 
 					case Commands::WHISPER:
 					{
-						auto whisper_command = dynamic_cast<WhisperCommand*>(command);
+						auto whisper_command = dynamic_cast<WhisperCommand*>(command.get());
 						auto receiver = whisper_command->getReceiver();
 						auto message = whisper_command->getMessage();
 
