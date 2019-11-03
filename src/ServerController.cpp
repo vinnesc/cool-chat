@@ -54,13 +54,15 @@ std::shared_ptr<SocketBase> ServerController::getSocketFromClient(std::shared_pt
     return pair->second;
 }
 
-void ServerController::messageEverybody(Message message) {
-    for (auto& c : this->clients) {
-        //Bad layer of indirection, just do it here
-        this->sendMessageClient(c.first->getName(), message);
-    }
-}
-
 std::unordered_map<std::shared_ptr<Client>, std::shared_ptr<SocketBase> >& ServerController::getClientsSockets() {
     return this->clients;
+}
+
+std::vector<std::string> ServerController::getClientsNames() {
+    std::vector<std::string> names;
+    for (auto& c : this->clients) {
+        names.push_back(c.first->getName());
+    }
+
+    return names;
 }

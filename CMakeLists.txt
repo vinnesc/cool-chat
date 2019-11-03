@@ -16,6 +16,7 @@ set(SERVER_SOURCES
     src/commands/QuitCommand.cpp
     src/commands/NameCommand.cpp
     src/commands/WhisperCommand.cpp
+    src/commands/ListUsersCommand.cpp
 )
 
 add_executable(server ${SERVER_SOURCES})

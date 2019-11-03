@@ -9,6 +9,7 @@ using nlohmann::json;
 class QuitCommand;
 class NameCommand;
 class WhisperCommand;
+class ListUsersCommand;
 
 enum class Commands {
     NAME = 0,
@@ -16,6 +17,7 @@ enum class Commands {
     WHISPER,
     JOIN,
     CREATE,
+    LIST_USERS,
     UNKNOWN
 };
 

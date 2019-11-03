@@ -7,6 +7,7 @@
 #include "ClientModel.hpp"
 #include "ServerController.hpp"
 #include "SocketBase.hpp"
+#include "Command.hpp"
 
 class ClientHandler{
     private:
@@ -15,6 +16,7 @@ class ClientHandler{
     public:
         ClientHandler(ServerController& serverController);
         void handle();
+        Message handleCommand(std::unique_ptr<Command> &command, std::shared_ptr<Client> &client);
 
 };
 
