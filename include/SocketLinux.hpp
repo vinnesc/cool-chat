@@ -3,12 +3,14 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
-
-#include "SocketBase.hpp"
+#include <memory>
+#include <iostream>
+#include "Types.hpp"
 
 typedef in_port_t Port;
+typedef int Socket;
 
-class SocketLinux : public SocketBase {
+class SocketLinux {
     private:
         Socket listeningSocket;
     	struct sockaddr_in server_address, client_address;
@@ -19,7 +21,7 @@ class SocketLinux : public SocketBase {
         Socket getSocket();
         int bind();
         int listen();
-        std::shared_ptr<SocketBase> accept();
+        std::shared_ptr<SocketLinux> accept();
         int send(const Message);
         int recv(Buffer, const Length);
 };

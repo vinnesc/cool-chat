@@ -10,7 +10,6 @@ set(SERVER_SOURCES
     src/ClientModel.cpp
     src/ClientHandler.cpp
     src/ServerController.cpp
-    src/SocketBase.cpp
     src/SocketLinux.cpp
     src/Command.cpp
     src/commands/QuitCommand.cpp

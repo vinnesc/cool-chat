@@ -6,15 +6,16 @@
 
 #include "ClientModel.hpp"
 #include "ServerController.hpp"
-#include "SocketBase.hpp"
+#include "SocketLinux.hpp"
 #include "Command.hpp"
 
 class ClientHandler{
     private:
         ServerController &serverController;
+        SocketLinux& listeningSocket;
         Socket registerFileDescriptors(fd_set &master);
     public:
-        ClientHandler(ServerController& serverController);
+        ClientHandler(ServerController& serverController, SocketLinux& listeningSocket);
         void handle();
         Message handleCommand(std::unique_ptr<Command> &command, std::shared_ptr<Client> &client);
 

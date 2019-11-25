@@ -8,7 +8,7 @@ ServerController::ServerController() {
 ServerController::~ServerController() {
 }
 
-void ServerController::addClient(std::shared_ptr<Client> client, std::shared_ptr<SocketBase> socket) {
+void ServerController::addClient(std::shared_ptr<Client> client, std::shared_ptr<SocketLinux> socket) {
     this->clients.insert(std::make_pair(client, socket));
 }
 
@@ -44,7 +44,7 @@ bool ServerController::sendMessageClient(std::string name, const Message message
 	return true;
 }
 
-std::shared_ptr<SocketBase> ServerController::getSocketFromClient(std::shared_ptr<Client> client) {
+std::shared_ptr<SocketLinux> ServerController::getSocketFromClient(std::shared_ptr<Client> client) {
     auto pair = this->clients.find(client);
     
     if (pair == this->clients.end()) {
@@ -54,7 +54,7 @@ std::shared_ptr<SocketBase> ServerController::getSocketFromClient(std::shared_pt
     return pair->second;
 }
 
-std::unordered_map<std::shared_ptr<Client>, std::shared_ptr<SocketBase> >& ServerController::getClientsSockets() {
+std::unordered_map<std::shared_ptr<Client>, std::shared_ptr<SocketLinux> > ServerController::getClientsSockets() {
     return this->clients;
 }
 
@@ -65,4 +65,8 @@ std::vector<std::string> ServerController::getClientsNames() {
     }
 
     return names;
+}
+
+bool ServerController::unregisterClient(std::shared_ptr<Client> &c) {
+    return this->clients.erase(c);
 }

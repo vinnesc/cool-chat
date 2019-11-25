@@ -9,14 +9,17 @@
 #include "commands/WhisperCommand.hpp"
 #include "commands/ListUsersCommand.hpp"
 
-ClientHandler::ClientHandler (ServerController& serverController) 
-: serverController(serverController)
+ClientHandler::ClientHandler (ServerController& serverController, SocketLinux& listeningSocket) 
+: serverController(serverController), listeningSocket(listeningSocket)
 {
 }
 
 Socket ClientHandler::registerFileDescriptors(fd_set& master) {
-	Socket max = -1;
+	Socket max = this->listeningSocket.getSocket();
+	FD_SET(this->listeningSocket.getSocket(), &master);
+
 	for (auto& client : this->serverController.getClientsSockets()) {
+		std::cout << "registering fd...\n";
 		auto socket = client.second->getSocket();
 		FD_SET(socket, &master);
 		
@@ -24,7 +27,6 @@ Socket ClientHandler::registerFileDescriptors(fd_set& master) {
 			max = socket;
 		}
 	}
-
 	return max;
 }
 
@@ -89,8 +91,23 @@ void ClientHandler::handle() {
 		//TO-DO: this is crashing when someone disconnects
 		auto retval = select(max_fd + 1, &m_master, NULL, NULL, NULL);
 		if (retval == -1) {
-			quit = true;
 			continue;
+		}
+
+		if (FD_ISSET(this->listeningSocket.getSocket(), &m_master)) {
+			auto connection_socket = this->listeningSocket.accept();
+			std::cout << connection_socket->getSocket();
+			if (connection_socket == nullptr) {
+				std::cerr << "ERROR: unable to accept an incoming connection\n";
+				quit = true;
+				continue;
+			}
+
+			std::cout << "New connection!\n";
+			//Create a new client and add it to the clients repository.
+			//In theory, I shouldn't have to delete this objects explicitly?
+			auto client = std::make_shared<Client>(0); 	//TO-DO: Implement clients ID
+			serverController.addClient(client, connection_socket);
 		}
 
 		auto clients_sockets = this->serverController.getClientsSockets();
@@ -104,10 +121,10 @@ void ClientHandler::handle() {
 				if (error <= 0) {
 					if (errno != EWOULDBLOCK) {
 						std::cerr << "ERROR: Failed to receive from client\n";
-					
-						FD_CLR(socket->getSocket(), &m_master);
+
+						FD_ZERO(&m_master);
 						close(socket->getSocket());
-						it = clients_sockets.erase(it);
+						this->serverController.unregisterClient(client);
 						continue;
 					} else {
 						continue;
@@ -125,6 +142,7 @@ void ClientHandler::handle() {
 				
 				std::cout << "Message received!\n"; //Print the name like a prompt and signal client to do the same
 			}
+			
 			it++;
 		}
 	}

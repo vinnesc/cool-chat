@@ -47,7 +47,7 @@ int SocketLinux::listen() {
     return ::listen(this->listeningSocket, 0);
 }
 
-std::shared_ptr<SocketBase> SocketLinux::accept() {
+std::shared_ptr<SocketLinux> SocketLinux::accept() {
     socklen_t client_address_length = sizeof(this->client_address);
     auto socket = ::accept(this->listeningSocket, reinterpret_cast<SA*>(&(this->client_address)), &client_address_length);
 
