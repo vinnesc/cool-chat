@@ -21,7 +21,6 @@ Socket ClientHandler::registerFileDescriptors(fd_set& master) {
 	
 	for (auto& client : clients) {
 		auto socket = client->getSocket()->getSocket();
-		std::cout << socket << "\n";
 		FD_SET(socket, &master);
 		
 		if (socket > max) {
@@ -51,7 +50,7 @@ Message ClientHandler::handleCommand(std::unique_ptr<Command> &command, Client *
 	{
 		auto whisper_command = dynamic_cast<WhisperCommand*>(command.get());
 		auto receiver = whisper_command->getReceiver();
-		auto message = whisper_command->getMessage();
+		auto message = whisper_command->serialize();
 
 		auto success = this->serverController.sendMessageClient(receiver, message);
 
