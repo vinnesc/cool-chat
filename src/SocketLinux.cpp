@@ -47,22 +47,22 @@ int SocketLinux::listen() {
     return ::listen(this->listeningSocket, 0);
 }
 
-std::shared_ptr<SocketLinux> SocketLinux::accept() {
+Socket SocketLinux::accept() {
     socklen_t client_address_length = sizeof(this->client_address);
     auto socket = ::accept(this->listeningSocket, reinterpret_cast<SA*>(&(this->client_address)), &client_address_length);
 
     if (socket == -1) {
-        return nullptr;
+        throw "Bad accept";
     }
 
     auto error = fcntl(socket, F_SETFL, O_NONBLOCK);
     if (error == -1) {
         perror("ERROR: fcntl() failed");
-        return nullptr;
+        throw "Bad fcntl";
     }
 
 
-    return std::make_shared<SocketLinux>(socket);
+    return socket;
 }
 
 int SocketLinux::send(const Message msg) {

@@ -1,7 +1,6 @@
 #include "ClientModel.hpp"
 
-Client::Client(ClientID id) {
-    this->id = id;
+Client::Client(ClientID id, SocketLinux &socket) : id(id), socket(socket) {
     this->muted = true;
 }
 
@@ -30,6 +29,10 @@ void Client::unmute() {
 
 bool Client::canTalk() {
     return !this->muted;
+}
+
+SocketLinux Client::getSocket() {
+    return this->socket;
 }
 
 bool Client::operator== (const Client &c) const

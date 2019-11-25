@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <string>
+#include "SocketLinux.hpp"
 
 typedef unsigned int ClientID;
 
@@ -10,11 +11,13 @@ class Client {
         ClientID id;
         std::string name;
         bool muted;
+        SocketLinux socket;
     public:
-        Client(ClientID id);
+        Client(ClientID id, SocketLinux& socket);
         ~Client();
         ClientID getId();
         std::string getName();
+        SocketLinux getSocket();
         void changeName(const std::string name);
         void mute();
         void unmute();

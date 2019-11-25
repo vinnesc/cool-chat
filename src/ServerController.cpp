@@ -1,4 +1,5 @@
 #include <sys/socket.h>
+#include <algorithm>
 
 #include "ServerController.hpp"
 
@@ -8,65 +9,54 @@ ServerController::ServerController() {
 ServerController::~ServerController() {
 }
 
-void ServerController::addClient(std::shared_ptr<Client> client, std::shared_ptr<SocketLinux> socket) {
-    this->clients.insert(std::make_pair(client, socket));
+void ServerController::registerClient(Client& client) {
+    this->clients.push_back(client);
 }
 
-bool ServerController::removeClient(std::shared_ptr<Client> client) {
-    return this->clients.erase(client);
-}
-
-std::shared_ptr<Client> ServerController::getClientByName(const std::string name) {
+const Client& ServerController::getClientByName(const std::string name) {
     for (auto& c : this->clients) {
-        if (c.first->getName() == name) {
-            return c.first;
+        if (c.getName() == name) {
+            return c;
         }
     }
 
-    //This should throw an exception instead?
-    return nullptr;
+    throw "No client";
 } 
 
 bool ServerController::sendMessageClient(std::string name, const Message message) {
-    auto client = this->getClientByName(name);
-    auto socket = this->getSocketFromClient(client);
+    try
+    {
+        auto client = this->getClientByName(name);
+        auto socket = client.getSocket();
 
-    if (client == nullptr) {
-        return false;
+        auto error = socket.send(message);
+
+        if (error < message.length()) {
+            return false;
+        }
+
+	    return true;
     }
-
-    auto error = socket->send(message);
-
-    if (error < message.length()) {
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
         return false;
-    }
-
-	return true;
+    }   
 }
 
-std::shared_ptr<SocketLinux> ServerController::getSocketFromClient(std::shared_ptr<Client> client) {
-    auto pair = this->clients.find(client);
-    
-    if (pair == this->clients.end()) {
-        return nullptr;
-    }
-
-    return pair->second;
-}
-
-std::unordered_map<std::shared_ptr<Client>, std::shared_ptr<SocketLinux> > ServerController::getClientsSockets() {
+std::vector<Client> ServerController::getClients() {
     return this->clients;
 }
 
 std::vector<std::string> ServerController::getClientsNames() {
     std::vector<std::string> names;
     for (auto& c : this->clients) {
-        names.push_back(c.first->getName());
+        names.push_back(c.getName());
     }
 
     return names;
 }
 
-bool ServerController::unregisterClient(std::shared_ptr<Client> &c) {
-    return this->clients.erase(c);
+void ServerController::unregisterClient(Client &c) {
+    this->clients.erase(std::remove(this->clients.begin(), this->clients.end(), c), this->clients.end());
 }

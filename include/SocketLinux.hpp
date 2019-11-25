@@ -21,7 +21,7 @@ class SocketLinux {
         Socket getSocket();
         int bind();
         int listen();
-        std::shared_ptr<SocketLinux> accept();
+        Socket accept();
         int send(const Message);
         int recv(Buffer, const Length);
 };

@@ -17,10 +17,11 @@ ClientHandler::ClientHandler (ServerController& serverController, SocketLinux& l
 Socket ClientHandler::registerFileDescriptors(fd_set& master) {
 	Socket max = this->listeningSocket.getSocket();
 	FD_SET(this->listeningSocket.getSocket(), &master);
-
-	for (auto& client : this->serverController.getClientsSockets()) {
+	auto clients = this->serverController.getClients();
+	
+	for (auto& client : clients) {
 		std::cout << "registering fd...\n";
-		auto socket = client.second->getSocket();
+		auto socket = client.getSocket().getSocket();
 		FD_SET(socket, &master);
 		
 		if (socket > max) {
@@ -30,7 +31,7 @@ Socket ClientHandler::registerFileDescriptors(fd_set& master) {
 	return max;
 }
 
-Message ClientHandler::handleCommand(std::unique_ptr<Command> &command, std::shared_ptr<Client> &client) {
+Message ClientHandler::handleCommand(std::unique_ptr<Command> &command, Client &client) {
 	std::cout << "Handling command!\n";
 	Message response;
 	
@@ -40,8 +41,8 @@ Message ClientHandler::handleCommand(std::unique_ptr<Command> &command, std::sha
 		auto name_command = dynamic_cast<NameCommand*>(command.get());
 		auto name = name_command->getName();
 
-		client->changeName(name);
-		client->unmute();
+		client.changeName(name);
+		client.unmute();
 					
 		std::cout << "Name changed!\n";
 	} break;
@@ -95,35 +96,32 @@ void ClientHandler::handle() {
 		}
 
 		if (FD_ISSET(this->listeningSocket.getSocket(), &m_master)) {
-			auto connection_socket = this->listeningSocket.accept();
-			std::cout << connection_socket->getSocket();
-			if (connection_socket == nullptr) {
+			auto new_socket = this->listeningSocket.accept();
+			if (new_socket == -1) {
 				std::cerr << "ERROR: unable to accept an incoming connection\n";
 				quit = true;
 				continue;
 			}
-
+			
 			std::cout << "New connection!\n";
-			//Create a new client and add it to the clients repository.
-			//In theory, I shouldn't have to delete this objects explicitly?
-			auto client = std::make_shared<Client>(0); 	//TO-DO: Implement clients ID
-			serverController.addClient(client, connection_socket);
+			SocketLinux connection_socket(new_socket);
+			Client client(0, connection_socket);	//TO-DO: Implement clients ID
+			serverController.registerClient(client);
 		}
 
-		auto clients_sockets = this->serverController.getClientsSockets();
-		for (auto it = clients_sockets.begin(); it != clients_sockets.end();) {
-			auto client = it->first;
-			auto socket = it->second;
+		auto clients = this->serverController.getClients();
+		for (auto &client : clients) {
+			auto socket = client.getSocket();
 
-			if (FD_ISSET(socket->getSocket(), &m_master)) {
+			if (FD_ISSET(socket.getSocket(), &m_master)) {
 				char buffer[128] = {0};
-				auto error = socket->recv(buffer, sizeof(buffer));
+				auto error = socket.recv(buffer, sizeof(buffer));
 				if (error <= 0) {
 					if (errno != EWOULDBLOCK) {
 						std::cerr << "ERROR: Failed to receive from client\n";
 
 						FD_ZERO(&m_master);
-						close(socket->getSocket());
+						close(socket.getSocket());
 						this->serverController.unregisterClient(client);
 						continue;
 					} else {
@@ -137,13 +135,11 @@ void ClientHandler::handle() {
 				
 				auto response = this->handleCommand(command, client);
 				if (response.length() != 0) {
-					socket->send(response);
+					socket.send(response);
 				}
 				
 				std::cout << "Message received!\n"; //Print the name like a prompt and signal client to do the same
 			}
-			
-			it++;
 		}
 	}
 
