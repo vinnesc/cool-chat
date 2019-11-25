@@ -17,7 +17,7 @@ class ClientHandler{
     public:
         ClientHandler(ServerController& serverController, SocketLinux& listeningSocket);
         void handle();
-        Message handleCommand(std::unique_ptr<Command> &command, Client &client);
+        Message handleCommand(std::unique_ptr<Command> &command, Client *client);
 
 };
 

@@ -10,15 +10,15 @@
 
 class ServerController{
     private:
-        std::vector<Client> clients;
+        std::vector<Client*> clients;
     
     public:
         ServerController();
         ~ServerController();
-        void registerClient(Client& client);
+        void registerClient(Client *client);
         bool sendMessageClient(std::string name, const Message message);
-        const Client& getClientByName(std::string name);
-        std::vector<Client> getClients();
-        void unregisterClient(Client &c);
+        Client* getClientByName(std::string name);
+        std::vector<Client*> getClients();
+        void unregisterClient(Client *c);
         std::vector<std::string> getClientsNames();
 };

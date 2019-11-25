@@ -11,13 +11,13 @@ class Client {
         ClientID id;
         std::string name;
         bool muted;
-        SocketLinux socket;
+        SocketLinux* socket;
     public:
-        Client(ClientID id, SocketLinux& socket);
+        Client(ClientID id, Socket socket);
         ~Client();
         ClientID getId();
         std::string getName();
-        SocketLinux getSocket();
+        SocketLinux * getSocket();
         void changeName(const std::string name);
         void mute();
         void unmute();

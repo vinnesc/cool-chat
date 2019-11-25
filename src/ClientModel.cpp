@@ -1,10 +1,12 @@
 #include "ClientModel.hpp"
 
-Client::Client(ClientID id, SocketLinux &socket) : id(id), socket(socket) {
+Client::Client(ClientID id, Socket socket) : id(id) {
+    this->socket = new SocketLinux(socket);
     this->muted = true;
 }
 
 Client::~Client() {
+    delete this->socket;
 }
 
 ClientID Client::getId() {
@@ -31,7 +33,7 @@ bool Client::canTalk() {
     return !this->muted;
 }
 
-SocketLinux Client::getSocket() {
+SocketLinux * Client::getSocket() {
     return this->socket;
 }
 

@@ -20,8 +20,8 @@ Socket ClientHandler::registerFileDescriptors(fd_set& master) {
 	auto clients = this->serverController.getClients();
 	
 	for (auto& client : clients) {
-		std::cout << "registering fd...\n";
-		auto socket = client.getSocket().getSocket();
+		auto socket = client->getSocket()->getSocket();
+		std::cout << socket << "\n";
 		FD_SET(socket, &master);
 		
 		if (socket > max) {
@@ -31,7 +31,7 @@ Socket ClientHandler::registerFileDescriptors(fd_set& master) {
 	return max;
 }
 
-Message ClientHandler::handleCommand(std::unique_ptr<Command> &command, Client &client) {
+Message ClientHandler::handleCommand(std::unique_ptr<Command> &command, Client *client) {
 	std::cout << "Handling command!\n";
 	Message response;
 	
@@ -41,8 +41,8 @@ Message ClientHandler::handleCommand(std::unique_ptr<Command> &command, Client &
 		auto name_command = dynamic_cast<NameCommand*>(command.get());
 		auto name = name_command->getName();
 
-		client.changeName(name);
-		client.unmute();
+		client->changeName(name);
+		client->unmute();
 					
 		std::cout << "Name changed!\n";
 	} break;
@@ -89,9 +89,9 @@ void ClientHandler::handle() {
 			continue;
 		}
 
-		//TO-DO: this is crashing when someone disconnects
 		auto retval = select(max_fd + 1, &m_master, NULL, NULL, NULL);
 		if (retval == -1) {
+			perror("select");
 			continue;
 		}
 
@@ -104,24 +104,23 @@ void ClientHandler::handle() {
 			}
 			
 			std::cout << "New connection!\n";
-			SocketLinux connection_socket(new_socket);
-			Client client(0, connection_socket);	//TO-DO: Implement clients ID
+			Client *client = new Client(0, new_socket);	//TO-DO: Implement clients ID
 			serverController.registerClient(client);
 		}
 
 		auto clients = this->serverController.getClients();
-		for (auto &client : clients) {
-			auto socket = client.getSocket();
+		for (auto client : clients) {
+			auto socket = client->getSocket();
 
-			if (FD_ISSET(socket.getSocket(), &m_master)) {
+			if (FD_ISSET(socket->getSocket(), &m_master)) {
 				char buffer[128] = {0};
-				auto error = socket.recv(buffer, sizeof(buffer));
+				auto error = socket->recv(buffer, sizeof(buffer));
 				if (error <= 0) {
 					if (errno != EWOULDBLOCK) {
 						std::cerr << "ERROR: Failed to receive from client\n";
 
 						FD_ZERO(&m_master);
-						close(socket.getSocket());
+						close(socket->getSocket());
 						this->serverController.unregisterClient(client);
 						continue;
 					} else {
@@ -135,7 +134,7 @@ void ClientHandler::handle() {
 				
 				auto response = this->handleCommand(command, client);
 				if (response.length() != 0) {
-					socket.send(response);
+					socket->send(response);
 				}
 				
 				std::cout << "Message received!\n"; //Print the name like a prompt and signal client to do the same

@@ -47,6 +47,7 @@ int main(int argc, char **argv) {
 
 	std::cout << "Waiting for a connection...\n";
 	std::thread handlerThread(clientHandlerThread, std::ref(handler));
+	handlerThread.detach();
 	while (!quit) {
 		std::string input;
 		std::getline(std::cin, input);
